@@ -31,6 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSpinner = document.getElementById('btn-spinner');
   const resetBtn = document.getElementById('reset-btn');
 
+  // --- New Results Dashboard DOM Selectors ---
+  const resultsCard = document.getElementById('results-card');
+  const resTimestamp = document.getElementById('res-timestamp');
+  const resName = document.getElementById('res-name');
+  const profileInitials = document.getElementById('profile-initials');
+  const resEmail = document.getElementById('res-email');
+  const resPhone = document.getElementById('res-phone');
+  const resSocialLinks = document.getElementById('res-social-links');
+  const resSummaryWrapper = document.getElementById('res-summary-wrapper');
+  const resSummary = document.getElementById('res-summary');
+  const resSkillsWrapper = document.getElementById('res-skills-wrapper');
+  const resTimelineWrapper = document.getElementById('res-timeline-wrapper');
+  const jsonCodeBlock = document.getElementById('json-code-block');
+  const rawTextBlock = document.getElementById('raw-text-block');
+  const btnCopyJson = document.getElementById('btn-copy-json');
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
   // --- State Variables ---
   let currentFile = null;
   let uploadTimer = null;
@@ -116,6 +134,39 @@ document.addEventListener('DOMContentLoaded', () => {
   resetBtn.addEventListener('click', resetState);
 
   analyzeBtn.addEventListener('click', triggerAnalysis);
+
+  // --- Dashboard Event Bindings ---
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const targetTab = btn.getAttribute('data-tab');
+      const activeTabContent = document.getElementById(targetTab);
+      if (activeTabContent) {
+        activeTabContent.classList.add('active');
+      }
+    });
+  });
+
+  btnCopyJson.addEventListener('click', () => {
+    const jsonText = jsonCodeBlock.textContent;
+    if (!jsonText) return;
+    
+    navigator.clipboard.writeText(jsonText).then(() => {
+      const btnTextNode = btnCopyJson.querySelector('.copy-btn-text');
+      const prevText = btnTextNode.textContent;
+      btnTextNode.textContent = 'Copied!';
+      
+      setTimeout(() => {
+        btnTextNode.textContent = prevText;
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy JSON text: ', err);
+      alert('Failed to copy to clipboard. Please select and copy manually.');
+    });
+  });
 
   // --- Handlers & Controllers ---
 
@@ -238,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showValidationMessage('File uploaded and validated successfully!', 'success');
   }
 
-  // FR-05: Analyze Resume Button flow
+  // FR-05: Analyze Resume Button flow connected to FastAPI Backend
   function triggerAnalysis() {
     if (!currentFile || isUploading) return;
 
@@ -249,18 +300,272 @@ document.addEventListener('DOMContentLoaded', () => {
     removeFileBtn.style.pointerEvents = 'none'; // Lock removal during analysis
     resetBtn.disabled = true;
 
-    // Simulate backend analysis delay
-    setTimeout(() => {
+    // Hide previous results
+    resultsCard.classList.add('hidden');
+
+    const formData = new FormData();
+    formData.append('file', currentFile);
+
+    // Call FastAPI backend /upload endpoint
+    fetch('http://localhost:8000/upload', {
+      method: 'POST',
+      body: formData
+    })
+    .then(async (response) => {
+      if (!response.ok) {
+        let errMsg = 'Failed to analyze the resume.';
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) {
+            errMsg = errData.detail;
+          }
+        } catch (e) {}
+        throw new Error(errMsg);
+      }
+      return response.json();
+    })
+    .then((data) => {
       // Revert loading state
-      analyzeBtn.querySelector('.btn-text').textContent = 'Analyze Resume';
-      btnSpinner.classList.add('hidden');
-      analyzeBtn.disabled = false;
-      removeFileBtn.style.pointerEvents = 'auto';
-      resetBtn.disabled = false;
+      resetButtonLoadingState();
 
       // Show completed message for frontend validations
-      showValidationMessage('Resume successfully submitted and queued for AI analysis!', 'success');
-    }, 1500);
+      showValidationMessage('Resume successfully parsed and structured!', 'success');
+
+      // Populate results dashboard
+      displayResults(data);
+    })
+    .catch((error) => {
+      // Revert loading state
+      resetButtonLoadingState();
+      
+      // Show error message
+      showValidationMessage(error.message || 'Error connecting to backend API.', 'error');
+    });
+  }
+
+  function resetButtonLoadingState() {
+    analyzeBtn.querySelector('.btn-text').textContent = 'Analyze Resume';
+    btnSpinner.classList.add('hidden');
+    analyzeBtn.disabled = false;
+    removeFileBtn.style.pointerEvents = 'auto';
+    resetBtn.disabled = false;
+  }
+
+  // Populate and render Results Dashboard from parsed API response
+  function displayResults(data) {
+    const parsed = data.parsed_data || {};
+    
+    // 1. Metadata Timestamp
+    const timestampStr = data.metadata && data.metadata.extracted_at 
+      ? new Date(data.metadata.extracted_at).toLocaleString() 
+      : new Date().toLocaleString();
+    resTimestamp.textContent = `Analyzed: ${timestampStr} | File ID: ${data.metadata ? data.metadata.file_id : 'N/A'}`;
+
+    // 2. Profile Info Header
+    resName.textContent = parsed.name || 'Candidate Name';
+    
+    // Initials extraction
+    if (parsed.name) {
+      const nameParts = parsed.name.trim().split(/\s+/);
+      if (nameParts.length >= 2) {
+        profileInitials.textContent = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+      } else if (nameParts.length === 1 && nameParts[0]) {
+        profileInitials.textContent = nameParts[0].substring(0, 2).toUpperCase();
+      } else {
+        profileInitials.textContent = '??';
+      }
+    } else {
+      profileInitials.textContent = '??';
+    }
+
+    // Email link
+    const emailNode = resEmail.querySelector('.value');
+    if (parsed.email) {
+      emailNode.textContent = parsed.email;
+      resEmail.classList.remove('hidden');
+    } else {
+      resEmail.classList.add('hidden');
+    }
+
+    // Phone link
+    const phoneNode = resPhone.querySelector('.value');
+    if (parsed.phone) {
+      phoneNode.textContent = parsed.phone;
+      resPhone.classList.remove('hidden');
+    } else {
+      resPhone.classList.add('hidden');
+    }
+
+    // Social & Professional links badges
+    resSocialLinks.innerHTML = '';
+    const links = parsed.links || {};
+    const platformSVGs = {
+      linkedin: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>`,
+      github: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>`,
+      leetcode: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>`,
+      codeforces: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`,
+      hackerrank: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+      portfolio: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
+    };
+
+    for (const [platform, url] of Object.entries(links)) {
+      if (url) {
+        const badge = document.createElement('a');
+        badge.href = url.startsWith('http') ? url : `https://${url}`;
+        badge.target = '_blank';
+        badge.rel = 'noopener noreferrer';
+        badge.className = 'profile-link-badge';
+        badge.title = platform.charAt(0).toUpperCase() + platform.slice(1);
+        badge.innerHTML = platformSVGs[platform] || platformSVGs.portfolio;
+        resSocialLinks.appendChild(badge);
+      }
+    }
+
+    // 3. Summary Block
+    if (parsed.summary && parsed.summary.trim()) {
+      resSummary.textContent = parsed.summary;
+      resSummaryWrapper.classList.remove('hidden');
+    } else {
+      resSummaryWrapper.classList.add('hidden');
+    }
+
+    // 4. Skills Groups
+    resSkillsWrapper.innerHTML = '';
+    const skillsGroups = [
+      { name: 'Technical Skills', key: 'technical_skills' },
+      { name: 'Soft Skills', key: 'soft_skills' },
+      { name: 'Skills & Proficiencies', key: 'skills' }
+    ];
+
+    let hasAnySkills = false;
+    skillsGroups.forEach(group => {
+      const list = parsed[group.key] || [];
+      if (list.length > 0) {
+        hasAnySkills = true;
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'skills-group';
+        
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'skills-group-title';
+        titleSpan.textContent = group.name;
+        groupDiv.appendChild(titleSpan);
+
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'skills-tags';
+
+        list.forEach(skill => {
+          const tag = document.createElement('span');
+          tag.className = 'skill-tag';
+          tag.textContent = skill;
+          tagsDiv.appendChild(tag);
+        });
+
+        groupDiv.appendChild(tagsDiv);
+        resSkillsWrapper.appendChild(groupDiv);
+      }
+    });
+
+    if (!hasAnySkills) {
+      const fallback = document.createElement('p');
+      fallback.style.color = 'var(--text-light)';
+      fallback.style.fontSize = '0.9rem';
+      fallback.textContent = 'No skills explicitly parsed.';
+      resSkillsWrapper.appendChild(fallback);
+    }
+
+    // 5. Timeline Wrapper (Education, Experience, Projects, etc.)
+    resTimelineWrapper.innerHTML = '';
+    const timelineSections = [
+      { name: 'Professional Experience', key: 'experience' },
+      { name: 'Internships & Training', key: 'internships' },
+      { name: 'Projects', key: 'projects' },
+      { name: 'Education', key: 'education' },
+      { name: 'Certifications', key: 'certifications' },
+      { name: 'Achievements & Awards', key: 'achievements' },
+      { name: 'Publications', key: 'publications' },
+      { name: 'Languages', key: 'languages' },
+      { name: 'Interests & Activities', key: 'interests' }
+    ];
+
+    let hasAnyTimeline = false;
+    timelineSections.forEach(sec => {
+      const items = parsed[sec.key] || [];
+      if (items.length > 0) {
+        hasAnyTimeline = true;
+        
+        const blockDiv = document.createElement('div');
+        blockDiv.className = 'timeline-section-block';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'timeline-section-title';
+        titleDiv.textContent = sec.name;
+        blockDiv.appendChild(titleDiv);
+
+        const listDiv = document.createElement('div');
+        listDiv.className = 'timeline-list';
+
+        items.forEach(item => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'timeline-item';
+          itemDiv.textContent = item;
+          listDiv.appendChild(itemDiv);
+        });
+
+        blockDiv.appendChild(listDiv);
+        resTimelineWrapper.appendChild(blockDiv);
+      }
+    });
+
+    // Custom headers from other_sections
+    const otherSections = parsed.other_sections || {};
+    for (const [secName, items] of Object.entries(otherSections)) {
+      if (items && items.length > 0) {
+        hasAnyTimeline = true;
+
+        const blockDiv = document.createElement('div');
+        blockDiv.className = 'timeline-section-block';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'timeline-section-title';
+        titleDiv.textContent = secName;
+        blockDiv.appendChild(titleDiv);
+
+        const listDiv = document.createElement('div');
+        listDiv.className = 'timeline-list';
+
+        items.forEach(item => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'timeline-item';
+          itemDiv.textContent = item;
+          listDiv.appendChild(itemDiv);
+        });
+
+        blockDiv.appendChild(listDiv);
+        resTimelineWrapper.appendChild(blockDiv);
+      }
+    }
+
+    if (!hasAnyTimeline) {
+      const fallback = document.createElement('p');
+      fallback.style.color = 'var(--text-light)';
+      fallback.style.fontSize = '0.9rem';
+      fallback.textContent = 'No structured timeline data found.';
+      resTimelineWrapper.appendChild(fallback);
+    }
+
+    // 6. JSON View Tab
+    jsonCodeBlock.textContent = JSON.stringify(data, null, 2);
+
+    // 7. Raw Text Tab
+    rawTextBlock.textContent = data.raw_text || '';
+
+    // Remove hidden class and scroll results dashboard into view
+    resultsCard.classList.remove('hidden');
+    
+    // Small timeout to let rendering trigger and then scroll
+    setTimeout(() => {
+      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   }
 
   // Reset helper
@@ -275,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     progressSection.classList.add('hidden');
     previewCard.classList.add('hidden');
     resetBtn.classList.add('hidden');
+    resultsCard.classList.add('hidden');
 
     // Reset analyze button states
     analyzeBtn.disabled = true;

@@ -128,6 +128,124 @@
         </div>
       </div>
 
+      <!-- Results Dashboard Card (Phase 2 Output) -->
+      <div id="results-card" class="card results-card hidden">
+        <div class="results-header-container">
+          <div>
+            <h2 class="results-title">Resume Analysis Complete</h2>
+            <p class="results-subtitle" id="res-timestamp">Extracted successfully</p>
+          </div>
+          <div class="badge">Week 2: Parsed Structure</div>
+        </div>
+
+        <!-- Tab Controls -->
+        <div class="results-tabs">
+          <button type="button" class="tab-btn active" data-tab="profile-tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Visual Profile
+          </button>
+          <button type="button" class="tab-btn" data-tab="json-tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            JSON Response
+          </button>
+          <button type="button" class="tab-btn" data-tab="text-tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Raw Text
+          </button>
+        </div>
+
+        <!-- Tab 1: Visual Profile -->
+        <div class="tab-content active" id="profile-tab">
+          <div class="profile-header-card">
+            <div class="profile-avatar">
+              <span id="profile-initials">JS</span>
+            </div>
+            <div class="profile-meta-info">
+              <h3 class="profile-name" id="res-name">John Doe</h3>
+              <div class="profile-contact-details">
+                <span id="res-email" class="contact-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <span class="value">email@domain.com</span>
+                </span>
+                <span id="res-phone" class="contact-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <span class="value">+123 456 7890</span>
+                </span>
+              </div>
+            </div>
+            <div class="profile-links-row" id="res-social-links">
+              <!-- Dynamically populated social badges -->
+            </div>
+          </div>
+
+          <!-- Summary section -->
+          <div class="profile-block hidden" id="res-summary-wrapper">
+            <h4 class="profile-block-title">Professional Summary</h4>
+            <p class="profile-summary-text" id="res-summary"></p>
+          </div>
+
+          <!-- Split Layout for Sections -->
+          <div class="results-grid">
+            <!-- Left Side: Skills & Strengths -->
+            <div class="results-section">
+              <h3 class="section-heading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                Skills Profile
+              </h3>
+              <div id="res-skills-wrapper" class="skills-wrapper">
+                <!-- Populated dynamically: Technical Skills, Soft Skills, General Skills -->
+              </div>
+            </div>
+
+            <!-- Right Side: Chronology and Blocks -->
+            <div class="results-section">
+              <h3 class="section-heading">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                Resume Sections
+              </h3>
+              <div id="res-timeline-wrapper" class="timeline-wrapper">
+                <!-- Dynamically populated Experience, Education, Projects, Internships, etc. -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: JSON Response -->
+        <div class="tab-content" id="json-tab">
+          <div class="code-header-panel">
+            <span class="file-name">extracted_resume.json</span>
+            <button type="button" class="btn btn-secondary btn-copy" id="btn-copy-json">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="copy-btn-text">Copy JSON</span>
+            </button>
+          </div>
+          <div class="code-block-wrapper">
+            <pre><code id="json-code-block" class="json-code"></code></pre>
+          </div>
+        </div>
+
+        <!-- Tab 3: Raw Text -->
+        <div class="tab-content" id="text-tab">
+          <div class="code-header-panel">
+            <span class="file-name">Extracted Raw Text</span>
+          </div>
+          <div class="raw-text-wrapper">
+            <pre id="raw-text-block" class="raw-text-pre"></pre>
+          </div>
+        </div>
+      </div>
 
     </main>
 
