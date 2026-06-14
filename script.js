@@ -65,6 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
     </svg>`;
 
+  const infoSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+    </svg>`;
+
   const pdfIconSvg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -150,23 +155,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  btnCopyJson.addEventListener('click', () => {
-    const jsonText = jsonCodeBlock.textContent;
-    if (!jsonText) return;
-    
-    navigator.clipboard.writeText(jsonText).then(() => {
-      const btnTextNode = btnCopyJson.querySelector('.copy-btn-text');
-      const prevText = btnTextNode.textContent;
-      btnTextNode.textContent = 'Copied!';
+  if (btnCopyJson) {
+    btnCopyJson.addEventListener('click', () => {
+      const jsonText = jsonCodeBlock.textContent;
+      if (!jsonText) return;
       
-      setTimeout(() => {
-        btnTextNode.textContent = prevText;
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy JSON text: ', err);
-      alert('Failed to copy to clipboard. Please select and copy manually.');
+      navigator.clipboard.writeText(jsonText).then(() => {
+        const btnTextNode = btnCopyJson.querySelector('.copy-btn-text');
+        const prevText = btnTextNode.textContent;
+        btnTextNode.textContent = 'Copied!';
+        
+        setTimeout(() => {
+          btnTextNode.textContent = prevText;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy JSON text: ', err);
+        alert('Failed to copy to clipboard. Please select and copy manually.');
+      });
     });
-  });
+  }
 
   // --- Handlers & Controllers ---
 
@@ -293,15 +300,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function triggerAnalysis() {
     if (!currentFile || isUploading) return;
 
-    // Show loading state on button
+    // Set button state directly to Upload Complete
     analyzeBtn.disabled = true;
-    btnSpinner.classList.remove('hidden');
-    analyzeBtn.querySelector('.btn-text').textContent = 'Analyzing...';
+    btnSpinner.classList.add('hidden');
+    analyzeBtn.querySelector('.btn-text').textContent = 'Upload Complete';
     removeFileBtn.style.pointerEvents = 'none'; // Lock removal during analysis
     resetBtn.disabled = true;
 
-    // Hide previous results
-    resultsCard.classList.add('hidden');
+    // Hide previous results if card exists
+    if (resultsCard) {
+      resultsCard.classList.add('hidden');
+    }
+
+    // Display popup message immediately
+    alert('Resume is uploaded');
+
+    // Clear previous validation messages
+    clearMessages();
 
     const formData = new FormData();
     formData.append('file', currentFile);
@@ -313,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(async (response) => {
       if (!response.ok) {
-        let errMsg = 'Failed to analyze the resume.';
+        let errMsg = 'Failed to upload the resume.';
         try {
           const errData = await response.json();
           if (errData && errData.detail) {
@@ -328,8 +343,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // Revert loading state
       resetButtonLoadingState();
 
-      // Show completed message for frontend validations
-      showValidationMessage('Resume successfully parsed and structured!', 'success');
+      // Show completed message
+      showValidationMessage('Resume uploaded successfully!', 'success');
+
+      // Popup message after uploading succeeds
+      alert('Resume is uploaded');
 
       // Populate results dashboard
       displayResults(data);
@@ -344,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function resetButtonLoadingState() {
-    analyzeBtn.querySelector('.btn-text').textContent = 'Analyze Resume';
+    analyzeBtn.querySelector('.btn-text').textContent = 'Upload Resume';
     btnSpinner.classList.add('hidden');
     analyzeBtn.disabled = false;
     removeFileBtn.style.pointerEvents = 'auto';
@@ -353,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Populate and render Results Dashboard from parsed API response
   function displayResults(data) {
+    if (!resultsCard) return;
     const parsed = data.parsed_data || {};
     
     // 1. Metadata Timestamp
@@ -580,12 +599,14 @@ document.addEventListener('DOMContentLoaded', () => {
     progressSection.classList.add('hidden');
     previewCard.classList.add('hidden');
     resetBtn.classList.add('hidden');
-    resultsCard.classList.add('hidden');
+    if (resultsCard) {
+      resultsCard.classList.add('hidden');
+    }
 
     // Reset analyze button states
     analyzeBtn.disabled = true;
     btnSpinner.classList.add('hidden');
-    analyzeBtn.querySelector('.btn-text').textContent = 'Analyze Resume';
+    analyzeBtn.querySelector('.btn-text').textContent = 'Upload Resume';
 
     clearMessages();
   }
@@ -598,6 +619,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (type === 'error') {
       messageIcon.innerHTML = errorSvg;
+    } else if (type === 'info') {
+      messageIcon.innerHTML = infoSvg;
     } else {
       messageIcon.innerHTML = successSvg;
     }

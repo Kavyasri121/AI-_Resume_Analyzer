@@ -305,6 +305,12 @@ body {
   color: var(--success-text);
 }
 
+.message-box.info {
+  background-color: var(--info-light);
+  border-left: 4px solid var(--info);
+  color: var(--info-text);
+}
+
 .message-icon svg {
   width: 20px;
   height: 20px;
