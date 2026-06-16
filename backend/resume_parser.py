@@ -124,31 +124,41 @@ class HeuristicResumeParser(BaseResumeParser):
             "portfolio": "",
             "leetcode": "",
             "codeforces": "",
-            "hackerrank": ""
+            "hackerrank": "",
+            "codechef": "",
+            "geeksforgeeks": ""
         }
 
         patterns = {
             "linkedin": r'(?:https?://)?(?:www\.)?linkedin\.com/in/[a-zA-Z0-9_-]+/?',
             "github": r'(?:https?://)?(?:www\.)?github\.com/[a-zA-Z0-9_-]+/?',
-            "leetcode": r'(?:https?://)?(?:www\.)?leetcode\.com/[a-zA-Z0-9_-]+/?',
+            "leetcode": r'(?:https?://)?(?:www\.)?leetcode\.com/(?:u/|profile/)?[a-zA-Z0-9_-]+/?',
             "codeforces": r'(?:https?://)?(?:www\.)?codeforces\.com/profile/[a-zA-Z0-9_-]+/?',
-            "hackerrank": r'(?:https?://)?(?:www\.)?hackerrank\.com/[a-zA-Z0-9_-]+/?',
+            "hackerrank": r'(?:https?://)?(?:www\.)?hackerrank\.com/(?:profile/)?[a-zA-Z0-9_-]+/?',
+            "codechef": r'(?:https?://)?(?:www\.)?codechef\.com/users/[a-zA-Z0-9_-]+/?',
+            "geeksforgeeks": r'(?:https?://)?(?:www\.)?geeksforgeeks\.org/user/[a-zA-Z0-9_-]+/?',
         }
 
         # Scan for matched URLs
         for key, pattern in patterns.items():
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                links[key] = match.group(0)
+                links[key] = match.group(0).strip()
 
-        # Extract portfolio (general URLs that aren't social networks)
+        # Extract portfolio (general URLs that aren't social networks or emails)
         # Search for any valid website/domain in the text
         all_urls = re.findall(r'(?:https?://)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:/[a-zA-Z0-9_#-]*)*', text)
-        social_domains = ["linkedin", "github", "leetcode", "codeforces", "hackerrank"]
+        social_domains = ["linkedin", "github", "leetcode", "codeforces", "hackerrank", "codechef", "geeksforgeeks", "gmail.com", "outlook.com", "yahoo.com"]
         for url in all_urls:
+            if "@" in url:
+                continue
             is_social = any(domain in url.lower() for domain in social_domains)
             if not is_social:
-                links["portfolio"] = url
+                # Check if this URL is part of an email address
+                email_pattern = r'[a-zA-Z0-9_.+-]+@' + re.escape(url)
+                if re.search(email_pattern, text):
+                    continue
+                links["portfolio"] = url.strip()
                 break  # Pick the first non-social URL as portfolio candidate
 
         return links
@@ -246,8 +256,10 @@ class HeuristicResumeParser(BaseResumeParser):
         """
         skills = []
         for line in lines:
-            # Replace bullet characters or symbols with commas for easy tokenization
-            line_cleaned = re.sub(r'[•|;\-\*]', ',', line)
+            # Strip list indicators at the start of the line
+            line_stripped = re.sub(r'^[•\-\*]\s*', '', line.strip())
+            # Replace bullet characters or symbols with commas for easy tokenization (preserve hyphens)
+            line_cleaned = re.sub(r'[•|;\*]', ',', line_stripped)
             tokens = [t.strip() for t in line_cleaned.split(",") if t.strip()]
             for token in tokens:
                 # Filter out lines that look like generic sentences (length check)
@@ -281,7 +293,157 @@ class HeuristicResumeParser(BaseResumeParser):
                 "portfolio": "",
                 "leetcode": "",
                 "codeforces": "",
-                "hackerrank": ""
+                "hackerrank": "",
+                "codechef": "",
+                "geeksforgeeks": ""
+            },
+            "other_sections": {}
+        }
+
+
+class AIResumeParser(BaseResumeParser):
+    """
+    An AI-powered resume parser using Gemini API.
+    Parses name, email, phone, links, and segments text into logical components accurately.
+    """
+    def __init__(self):
+        import os
+        from google import genai
+        from dotenv import load_dotenv
+        load_dotenv()
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        if not self.api_key or not self.api_key.strip():
+            raise ValueError(
+                "GEMINI_API_KEY is missing or empty. Please open backend/.env and add your valid Gemini API key "
+                "to execute candidate analysis."
+            )
+        self.client = genai.Client(api_key=self.api_key)
+        self.model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+
+    def parse(self, raw_text: str) -> Dict[str, Any]:
+        if not raw_text or not raw_text.strip():
+            return self._get_empty_parsed_structure()
+
+        prompt = f"""
+You are an expert resume parsing system. Your task is to parse the raw resume text into a structured JSON format.
+Extract contact details, social links, education, projects, experience, internships, skills, certifications, and achievements.
+
+Guidelines:
+1. "name": Extract the candidate's full name.
+2. "email": Extract the email address.
+3. "phone": Extract the phone number.
+4. "links": Look at any URLs in the text (including any links under '--- Extracted Hyperlinks ---' at the bottom). Extract the URL for:
+   - linkedin, github, leetcode, codeforces, hackerrank, codechef, geeksforgeeks.
+   - portfolio: any personal website or other URL that is not a social network or email domain.
+   - If not found, set to empty string "". Do not include email domains (like gmail.com) as a portfolio.
+5. "summary": A brief, summary statement or objective from the resume (use the raw resume objective/summary if present, or leave empty if not).
+6. "skills", "technical_skills", "soft_skills": Extract lists of skills. Put technical tools/languages in "technical_skills", interpersonal skills in "soft_skills", and others in "skills".
+7. "education": Extract all academic degrees/schools, each as a separate string element. Include degree, school, dates, GPA/marks if present (e.g. "Bachelor of Technology (B.Tech), Computer Science, JNTUK, 2023-2027 - CGPA: 8.84").
+8. "projects": Extract each distinct project as a string element (title and bullets merged or as separate items, but keep the descriptions informative).
+9. "experience": Extract each job position/role/company as a string element.
+10. "internships": Extract each internship position/role/company as a string element.
+11. "certifications": Extract certifications.
+12. "achievements": Extract achievements.
+13. "publications", "languages", "interests": Extract any relevant sections.
+14. "other_sections": Any other sections not covered.
+
+Resume Text:
+{raw_text}
+
+Respond ONLY with a valid JSON object matching the following structure:
+{{
+  "name": "",
+  "email": "",
+  "phone": "",
+  "summary": "",
+  "skills": [],
+  "technical_skills": [],
+  "soft_skills": [],
+  "education": [],
+  "projects": [],
+  "experience": [],
+  "internships": [],
+  "certifications": [],
+  "achievements": [],
+  "publications": [],
+  "languages": [],
+  "interests": [],
+  "links": {{
+    "linkedin": "",
+    "github": "",
+    "leetcode": "",
+    "codeforces": "",
+    "hackerrank": "",
+    "codechef": "",
+    "geeksforgeeks": "",
+    "portfolio": ""
+  }},
+  "other_sections": {{}}
+}}
+Do not include any extra text, markdown formatting (other than JSON itself), or commentary outside the JSON block.
+"""
+        from google.genai import types
+        import json
+        import re
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
+            text = response.text.strip()
+            if text.startswith("```"):
+                text = re.sub(r"^```(?:json)?\n", "", text)
+                text = re.sub(r"\n```$", "", text)
+                text = text.strip()
+            parsed_json = json.loads(text)
+            
+            # Ensure all keys are present
+            empty_structure = self._get_empty_parsed_structure()
+            for key, val in empty_structure.items():
+                if key not in parsed_json:
+                    parsed_json[key] = val
+                elif key == "links":
+                    # Clean/ensure all links keys
+                    for lkey, lval in val.items():
+                        if lkey not in parsed_json["links"]:
+                            parsed_json["links"][lkey] = lval
+            return parsed_json
+        except Exception as e:
+            # Fallback to heuristic parser in case of API failure
+            print(f"Warning: AI resume parsing failed, falling back to heuristic parser: {str(e)}")
+            heuristic_parser = HeuristicResumeParser()
+            return heuristic_parser.parse(raw_text)
+
+    def _get_empty_parsed_structure(self) -> Dict[str, Any]:
+        return {
+            "name": "",
+            "email": "",
+            "phone": "",
+            "summary": "",
+            "skills": [],
+            "technical_skills": [],
+            "soft_skills": [],
+            "education": [],
+            "projects": [],
+            "experience": [],
+            "internships": [],
+            "certifications": [],
+            "achievements": [],
+            "publications": [],
+            "languages": [],
+            "interests": [],
+            "links": {
+                "linkedin": "",
+                "github": "",
+                "portfolio": "",
+                "leetcode": "",
+                "codeforces": "",
+                "hackerrank": "",
+                "codechef": "",
+                "geeksforgeeks": ""
             },
             "other_sections": {}
         }

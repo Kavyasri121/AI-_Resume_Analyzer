@@ -1,0 +1,136 @@
+{
+  "raw_text": "KAVYA SRI VIJAYALAKSHMI VANKAYALA\nkavyasri.v01@gmail.com | +91 9014240597 | Chilakaluripet, Andhra Pradesh | LinkedIn | GitHub\nCAREER OBJECTIVE\nDriven computer science student aiming to leverage Java, data structures, and modern web technologies to develop\nefficient, scalable, and production-ready software solutions.\nEDUCATION\nBachelor of Technology (B.Tech), Computer Science and Engineering, 2023–2027 — CGPA: 8.84\nUniversity College of Engineering, Kakinada (JNTUK)\nIntermediate (MPC), BIEAP, Sri Chaitanya Junior College 2021–2023 — 980/1000\nClass X, BSEAP, Modern High School 2020–2021 — 597/600\nTECHNICAL SKILLS\nProgramming Languages: Java, Python, C frontend: HTML, CSS, JavaScript, React.js\nBackend: Node.js, Spring Boot Testing: Selenium, REST-Assured\nDatabases: MySQL, MongoDB Tools: Git, GitHub, VS Code, Postman\nPROJECTS\nE-Commerce Website\n• Developed a responsive e-commerce web application using HTML, CSS, and JavaScript with interactive UI\n• Implemented search, filtering, and a localStorage-based cart for efficient product discovery & user experience\nAPI Key Leak Detection System – Full Stack\n• Developed a full-stack web app to detect exposed API keys across 4 data sources using regex-based scanning\n• Built a regex engine for 10+ credential formats (AWS, GitHub, OpenAI, etc.) to improve detection coverage\n• Designed risk classification with alerts using Flask & MongoDB, handling 50+ scans with tracking & remediation\nINTERNSHIP\nJava Backend & Automation Intern, Infosys Springboard Sep 2025 – Nov 2025\n• Engineered a scalable regression framework for UI & API using Java, Selenium, REST-Assured, Spring Boot\n• Optimized parallel test execution (multi-threading) to run 50+ test cases concurrently, improving efficiency\n• Automated API testing and HTML/CSV reporting with MySQL and RabbitMQ for test tracking and reliability\nCERTIFICATIONS\n• Completed a 12-week NPTEL SWAYAM certification in Cloud Computing\n• Earned Java certification from Infosys Springboard\nACHIEVEMENTS\n• Achieved 1st Place (Rs. 50,000) at ISEA–JNTU 2026 CTF Hackathon for building an Full Stack API\nkey leak detection application\n• Awarded INR 1.15 lakh/year in merit scholarships (Reliance Foundation, North South Foundation, NRIVA)\n• Secured Rank 1564 in AP EAPCET (state-level engineering entrance exam) among 2,00,000+ candidates\n• Solved 450+ DSA problems on platforms like LeetCode, CodeChef, GeeksforGeeks, and HackerRank\nEXTRACURRICULAR ACTIVITIES\n• Won 1st Prize in JNTUK Central Zone Inter-Collegiate Kho-Kho Tournament (Women).\n\n--- Extracted Hyperlinks ---\nmailto:kavyasri.v01@gmail.com\nhttps://www.linkedin.com/in/kavyasri-vankayala-5952a225b\nhttps://github.com/Kavyasri121\nhttps://leetcode.com/u/kavyasri_vl/\nhttps://www.codechef.com/users/sri_187\nhttps://www.geeksforgeeks.org/user/vksvlk3ih\nhttps://www.hackerrank.com/profile/vksvl2006",
+  "parsed_data": {
+    "name": "KAVYA SRI VIJAYALAKSHMI VANKAYALA",
+    "email": "kavyasri.v01@gmail.com",
+    "phone": "+91 9014240597",
+    "summary": "Driven computer science student aiming to leverage Java, data structures, and modern web technologies to develop efficient, scalable, and production-ready software solutions.",
+    "skills": [],
+    "technical_skills": [
+      "Java",
+      "Python",
+      "C",
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "React.js",
+      "Node.js",
+      "Spring Boot",
+      "Selenium",
+      "REST-Assured",
+      "MySQL",
+      "MongoDB",
+      "Git",
+      "GitHub",
+      "VS Code",
+      "Postman"
+    ],
+    "soft_skills": [],
+    "education": [
+      "Bachelor of Technology (B.Tech), Computer Science and Engineering, 2023–2027 — CGPA: 8.84, University College of Engineering, Kakinada (JNTUK)",
+      "Intermediate (MPC), BIEAP, Sri Chaitanya Junior College 2021–2023 — 980/1000",
+      "Class X, BSEAP, Modern High School 2020–2021 — 597/600"
+    ],
+    "projects": [
+      "E-Commerce Website: Developed a responsive e-commerce web application using HTML, CSS, and JavaScript with interactive UI. Implemented search, filtering, and a localStorage-based cart for efficient product discovery & user experience.",
+      "API Key Leak Detection System – Full Stack: Developed a full-stack web app to detect exposed API keys across 4 data sources using regex-based scanning. Built a regex engine for 10+ credential formats (AWS, GitHub, OpenAI, etc.) to improve detection coverage. Designed risk classification with alerts using Flask & MongoDB, handling 50+ scans with tracking & remediation."
+    ],
+    "experience": [],
+    "internships": [
+      "Java Backend & Automation Intern, Infosys Springboard Sep 2025 – Nov 2025: Engineered a scalable regression framework for UI & API using Java, Selenium, REST-Assured, Spring Boot. Optimized parallel test execution (multi-threading) to run 50+ test cases concurrently, improving efficiency. Automated API testing and HTML/CSV reporting with MySQL and RabbitMQ for test tracking and reliability."
+    ],
+    "certifications": [
+      "12-week NPTEL SWAYAM certification in Cloud Computing",
+      "Java certification from Infosys Springboard"
+    ],
+    "achievements": [
+      "Achieved 1st Place (Rs. 50,000) at ISEA–JNTU 2026 CTF Hackathon for building an Full Stack API key leak detection application",
+      "Awarded INR 1.15 lakh/year in merit scholarships (Reliance Foundation, North South Foundation, NRIVA)",
+      "Secured Rank 1564 in AP EAPCET (state-level engineering entrance exam) among 2,00,000+ candidates",
+      "Solved 450+ DSA problems on platforms like LeetCode, CodeChef, GeeksforGeeks, and HackerRank"
+    ],
+    "publications": [],
+    "languages": [],
+    "interests": [],
+    "links": {
+      "linkedin": "https://www.linkedin.com/in/kavyasri-vankayala-5952a225b",
+      "github": "https://github.com/Kavyasri121",
+      "leetcode": "https://leetcode.com/u/kavyasri_vl/",
+      "codeforces": "",
+      "hackerrank": "https://www.hackerrank.com/profile/vksvl2006",
+      "codechef": "https://www.codechef.com/users/sri_187",
+      "geeksforgeeks": "https://www.geeksforgeeks.org/user/vksvlk3ih",
+      "portfolio": ""
+    },
+    "other_sections": {
+      "EXTRACURRICULAR ACTIVITIES": [
+        "Won 1st Prize in JNTUK Central Zone Inter-Collegiate Kho-Kho Tournament (Women)."
+      ]
+    }
+  },
+  "ai_analysis": {
+    "summary": "A driven Computer Science undergraduate with a strong academic record and practical experience in backend development and test automation. Proficient in Java, Python, and web technologies, with a passion for building efficient and scalable software solutions. Seeking to leverage technical skills in a challenging role.",
+    "technical_skills": [
+      "Java",
+      "Python",
+      "C",
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "React",
+      "Node.js",
+      "Spring Boot",
+      "Selenium",
+      "REST-Assured",
+      "MySQL",
+      "MongoDB",
+      "Git",
+      "GitHub",
+      "VS Code",
+      "Postman",
+      "Flask",
+      "RabbitMQ",
+      "Cloud Computing"
+    ],
+    "soft_skills": [
+      "Teamwork",
+      "Communication",
+      "Problem-solving",
+      "Adaptability",
+      "Analytical Thinking"
+    ],
+    "strengths": [
+      "Solid academic foundation with a high CGPA and numerous scholarships.",
+      "Hands-on experience in full-stack development and test automation from internships and projects.",
+      "Proven problem-solving skills demonstrated by DSA achievements and hackathon wins.",
+      "Proficiency in a wide range of modern programming languages, frameworks, and tools."
+    ],
+    "weaknesses": [
+      "Limited professional work experience beyond internships.",
+      "Project descriptions could benefit from quantifiable outcomes and impact metrics.",
+      "No explicit mention of experience with production deployment or CI/CD pipelines."
+    ],
+    "projects": [
+      {
+        "title": "E-Commerce Website",
+        "description": "Developed a responsive e-commerce web application with interactive UI, implementing essential features like search and filtering. Enhanced user experience through the integration of a localStorage-based shopping cart for efficient product discovery.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "localStorage"
+        ]
+      },
+      {
+        "title": "API Key Leak Detection System",
+        "description": "Created a full-stack web application to detect exposed API keys across multiple data sources using a custom regex engine capable of handling over 10 credential formats. Designed a risk classification system with alerts and implemented tracking with Flask and MongoDB.",
+        "technologies": [
+          "Python",
+          "Flask",
+          "MongoDB",
+          "Regex"
+        ]
+      }
+    ]
+  }
+}

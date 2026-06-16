@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -128,10 +128,466 @@
         </div>
       </div>
 
-      
-      
-     
+      <!-- Results Dashboard Container -->
+      <div class="results-container results-card hidden" id="results-card">
+        
+        <!-- Skeleton Loading State -->
+        <div class="skeleton-loader-container" id="skeleton-loader">
+          <div class="skeleton-header">
+            <div class="skeleton-avatar shimmer"></div>
+            <div class="skeleton-header-info">
+              <div class="skeleton-line title shimmer"></div>
+              <div class="skeleton-line subtitle shimmer"></div>
+            </div>
+          </div>
+          <div class="skeleton-grid">
+            <div class="skeleton-column">
+              <div class="skeleton-card summary shimmer"></div>
+              <div class="skeleton-card timeline shimmer"></div>
+            </div>
+            <div class="skeleton-column">
+              <div class="skeleton-card skills shimmer"></div>
+              <div class="skeleton-card insights shimmer"></div>
+            </div>
+          </div>
+        </div>
 
+        <!-- Dashboard Content View (Hidden during loading) -->
+        <div class="dashboard-content-view hidden" id="dashboard-content">
+          <!-- Overview Header -->
+          <div class="profile-header-card">
+            <div class="profile-avatar" id="profile-initials">??</div>
+            <div class="profile-meta-info">
+              <h2 class="profile-name" id="res-name">Candidate Name</h2>
+              <div class="profile-contact-details">
+                <div class="contact-item" id="res-email">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <span class="value"></span>
+                </div>
+                <div class="contact-item" id="res-phone">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span class="value"></span>
+                </div>
+              </div>
+            </div>
+            <div class="profile-links-row" id="res-social-links">
+              <!-- LinkedIn / GitHub badges rendered here -->
+            </div>
+          </div>
+
+          <!-- Dashboard Tabs Switcher -->
+          <div class="dashboard-tabs">
+            <button type="button" class="tab-btn active" data-tab="resume-analysis">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Resume Analysis
+            </button>
+            <button type="button" class="tab-btn" data-tab="ats-analysis">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+              </svg>
+              ATS Analysis
+            </button>
+          </div>
+
+          <!-- Tab Content: ATS Analysis -->
+          <div id="ats-analysis-tab-content" class="tab-content-panel hidden">
+            <!-- ATS Configuration Panel (Section 1) -->
+            <div class="profile-block" id="ats-config-panel" style="margin-bottom: 2rem;">
+            <div class="section-heading" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sliders">
+                <line x1="4" y1="21" x2="4" y2="14"/>
+                <line x1="4" y1="10" x2="4" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12" y2="3"/>
+                <line x1="20" y1="21" x2="20" y2="16"/>
+                <line x1="20" y1="12" x2="20" y2="3"/>
+                <line x1="1" y1="14" x2="7" y2="14"/>
+                <line x1="9" y1="8" x2="15" y2="8"/>
+                <line x1="17" y1="16" x2="23" y2="16"/>
+              </svg>
+              <span>Score Your Resume Against Your Target Role</span>
+            </div>
+            <p class="section-subtitle-description" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5;">
+              Evaluate your resume's readiness against standard industry expectations or a specific job description. We'll check readability, calculate keyword optimization scores, identify missing skills, and compile a roadmap.
+            </p>
+            <form id="ats-config-form" class="ats-form-grid" onsubmit="return false;">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="ats-target-role" class="form-label" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Target Role <span class="required" style="color: var(--danger);">*</span></label>
+                <input type="text" id="ats-target-role" class="form-input" placeholder="e.g. Software Engineer, Senior Product Designer" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-family: var(--font-body); font-size: 0.95rem; color: var(--text-main);" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Experience Level <span class="required" style="color: var(--danger);">*</span></label>
+                <div class="exp-buttons-group" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;">
+                  <button type="button" class="exp-btn active" data-value="Fresher" style="display: flex; flex-direction: column; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--white); cursor: pointer; text-align: left; transition: all var(--transition-fast);">
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Fresher</strong>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">0-1 YRS</span>
+                  </button>
+                  <button type="button" class="exp-btn" data-value="Mid-level" style="display: flex; flex-direction: column; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--white); cursor: pointer; text-align: left; transition: all var(--transition-fast);">
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Mid-level</strong>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">2-5 YRS</span>
+                  </button>
+                  <button type="button" class="exp-btn" data-value="Senior" style="display: flex; flex-direction: column; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--white); cursor: pointer; text-align: left; transition: all var(--transition-fast);">
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Senior</strong>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">6-10 YRS</span>
+                  </button>
+                  <button type="button" class="exp-btn" data-value="Executive" style="display: flex; flex-direction: column; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--white); cursor: pointer; text-align: left; transition: all var(--transition-fast);">
+                    <strong style="font-size: 0.85rem; color: var(--text-main);">Executive</strong>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">10+ YRS</span>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group full-width" style="margin-bottom: 1.5rem;">
+                <label for="ats-job-desc" class="form-label" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Job Description <span class="optional" style="color: var(--text-light); font-weight: normal; font-size: 0.8rem;">(Optional) — unlocks matched keyword details and exact skills gap analysis</span></label>
+                <textarea id="ats-job-desc" class="form-textarea" placeholder="Paste the job description details here to perform comparative keyword matching..." style="width: 100%; min-height: 120px; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-family: var(--font-body); font-size: 0.95rem; resize: vertical; color: var(--text-main);"></textarea>
+              </div>
+              <div class="form-actions full-width">
+                <button type="button" class="btn btn-primary" id="run-ats-btn" style="width: 100%; padding: 0.9rem; justify-content: center; font-size: 1rem; border-radius: 10px;">
+                  <span class="btn-text">Run ATS Analysis →</span>
+                  <div class="spinner hidden" id="ats-btn-spinner" style="border-top-color: var(--white); margin-left: 0.5rem;"></div>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- ATS Skeleton Loader -->
+          <div class="skeleton-loader-container hidden" id="ats-skeleton-loader" style="margin-bottom: 2rem;">
+            <div class="skeleton-grid" style="display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 2rem;">
+              <div class="skeleton-card shimmer" style="height: 260px; border-radius: 20px;"></div>
+              <div class="skeleton-card shimmer" style="height: 260px; border-radius: 20px;"></div>
+            </div>
+            <div class="skeleton-card shimmer" style="height: 220px; margin-top: 1.5rem; border-radius: 20px;"></div>
+            <div class="skeleton-card shimmer" style="height: 300px; margin-top: 1.5rem; border-radius: 20px;"></div>
+          </div>
+
+          <!-- ATS Results Dashboard Container (Section 2 to 8) -->
+          <div class="ats-results-container hidden" id="ats-results-container" style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 2rem;">
+            
+            <!-- Grid for Overall Score and Category Breakdown -->
+            <div class="results-grid" style="display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 2rem;">
+              
+              <!-- Section 2: Overall Score Card -->
+              <div class="profile-block" id="ats-score-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1.25rem;">
+                <span class="badge" style="font-size: 0.7rem; font-weight: 700; background-color: var(--primary-light); color: var(--primary);">Overall ATS Score</span>
+                
+                <!-- Circular Score Visualization -->
+                <div class="circular-score-wrapper" style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
+                  <svg class="score-circle-svg" viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                    <circle class="score-circle-bg" cx="50" cy="50" r="42" stroke="var(--border-color)" stroke-width="7" fill="transparent"></circle>
+                    <circle class="score-circle-bar" id="ats-circle-bar" cx="50" cy="50" r="42" stroke="var(--primary)" stroke-width="7" fill="transparent" stroke-linecap="round" stroke-dasharray="263.89" stroke-dashoffset="263.89" style="transition: stroke-dashoffset 1s ease-in-out;"></circle>
+                  </svg>
+                  <div class="score-text-container" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-header);">
+                    <span class="score-val" id="ats-score-text" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">0</span>
+                    <span class="score-total" style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; margin-top: 0.1rem;">Rating / 100</span>
+                  </div>
+                </div>
+
+                <div class="status-container">
+                  <h3 class="status-title" id="ats-readiness-status" style="font-family: var(--font-header); font-weight: 800; font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.25rem;">Candidate Ready</h3>
+                  <p class="status-description" id="ats-readiness-desc" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; padding: 0 0.5rem;"></p>
+                </div>
+              </div>
+
+              <!-- Section 3: Category Breakdown -->
+              <div class="profile-block" id="ats-breakdown-card" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="section-heading" style="margin-bottom: 0.25rem; padding-bottom: 0.5rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                  <span>Category Breakdown</span>
+                </div>
+                <div class="breakdown-list" id="ats-breakdown-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1.5rem;">
+                  <!-- Progress bars dynamically rendered here -->
+                </div>
+                <!-- Mini footer with meta info like screenshot -->
+                <div class="breakdown-meta-footer" id="ats-breakdown-meta" style="font-size: 0.75rem; color: var(--text-light); border-top: 1px solid var(--border-color); padding-top: 0.6rem; margin-top: 0.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                  <!-- Filled via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: ATS Score Calculation View -->
+            <div class="profile-block" id="ats-calculation-card" style="display: flex; flex-direction: column; gap: 1rem;">
+              <div class="section-heading" style="margin-bottom: 0.25rem; padding-bottom: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+                </svg>
+                <span>How your ATS Score is calculated</span>
+              </div>
+              <p class="section-subtitle-description" style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem;">
+                Each category score is weighted according to its direct impact on commercial recruitment sorting pipelines.
+              </p>
+              
+              <!-- Horizontal weighted distribution bar -->
+              <div class="weighted-bar-container" style="background-color: var(--border-color); height: 16px; border-radius: 8px; overflow: hidden; display: flex; margin-top: 0.5rem;">
+                <div class="weighted-bar-progress" id="ats-weighted-progress-bar" style="height: 100%; width: 100%; display: flex;">
+                  <!-- Segment widths populated dynamically via JS -->
+                </div>
+              </div>
+              
+              <!-- Legend of weights -->
+              <div class="weighted-legend" id="ats-weighted-legend" style="display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-top: 0.25rem;">
+                <!-- Legend items via JS -->
+              </div>
+
+              <!-- Individual category scores grid -->
+              <div class="calculation-grid" id="ats-calculation-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 0.5rem;">
+                <!-- Cards filled via JS -->
+              </div>
+            </div>
+
+            <!-- Side-by-side grid for Keyword Analysis and Role Alignment -->
+            <div class="results-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+              
+              <!-- Section 6: Keyword Analysis Card -->
+              <div class="profile-block" id="ats-keywords-card" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="section-heading" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                    <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
+                  </svg>
+                  <span>Role Keywords Match</span>
+                </div>
+                
+                <div class="keywords-match-wrapper" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                  <div>
+                    <h5 class="keyword-sub-title matched" id="ats-keywords-match-ratio" style="font-size: 0.8rem; font-weight: 700; color: var(--success-text); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between;">
+                      <span>Matched Keywords</span>
+                      <span id="ats-keywords-match-ratio-val">0/0</span>
+                    </h5>
+                    <div class="keywords-chips-group" id="ats-detected-keywords" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                      <!-- Matched keyword chips -->
+                    </div>
+                  </div>
+                  <div>
+                    <h5 class="keyword-sub-title missing" style="font-size: 0.8rem; font-weight: 700; color: var(--danger-text); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Missing Keywords — Add to resume</h5>
+                    <div class="keywords-chips-group" id="ats-missing-keywords" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                      <!-- Missing keyword chips -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 7: Role Alignment Card -->
+              <div class="profile-block" id="ats-alignment-card" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="section-heading" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                  <span>Role Alignment Analysis</span>
+                </div>
+                <div class="alignment-content-wrapper" id="ats-alignment-content" style="display: flex; flex-direction: column; gap: 1rem;">
+                  <!-- Alignment data and matched/missing skills lists dynamically rendered -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 5: Section-wise Resume Analysis Card -->
+            <div class="profile-block" id="ats-sections-analysis-card" style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <div class="section-heading" style="margin-bottom: 0.25rem; padding-bottom: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                  <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                <span>Section-by-section Analysis</span>
+              </div>
+              <p class="section-subtitle-description" style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem;">
+                A granular audit of each resume section, highlighting compatibility issues, content completeness, and recruiter tips.
+              </p>
+              
+              <!-- Missing sections banner -->
+              <div class="message-box error hidden" id="ats-missing-sections-banner" style="margin-top: 0.25rem; display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem;">
+                <div class="message-icon" style="color: var(--danger); flex-shrink: 0; width: 18px; height: 18px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="8"/>
+                  </svg>
+                </div>
+                <div class="message-text" style="color: var(--danger-text); line-height: 1.4;">
+                  <strong>Missing Crucial Sections:</strong> <span id="ats-missing-sections-list"></span>. Adding these sections is highly recommended to improve compatibility scores.
+                </div>
+              </div>
+
+              <!-- List of section evaluations -->
+              <div class="section-audits-list" id="ats-section-audits-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
+                <!-- Audit cards filled via JS -->
+              </div>
+            </div>
+
+            <!-- Section 8: Optimization Roadmap Card -->
+            <div class="profile-block" id="ats-roadmap-card" style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <div class="section-heading" style="margin-bottom: 0.25rem; padding-bottom: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                  <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+                  <line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>
+                </svg>
+                <span>ATS Optimization Roadmap</span>
+              </div>
+              <p class="section-subtitle-description" style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem;">
+                Prioritized action items to improve search visibility and scoring matching algorithms. Follow these steps to optimize your resume.
+              </p>
+              
+              <div class="roadmap-priorities-list" id="ats-roadmap-list" style="display: flex; flex-direction: column; gap: 1.25rem; margin-top: 0.5rem;">
+                <!-- Priorities rendered here via JS -->
+              </div>
+            </div>
+
+          </div><!-- /#ats-results-container -->
+
+          </div><!-- /#ats-analysis-tab-content -->
+
+          <!-- Tab Content: Resume Analysis -->
+          <div id="resume-analysis-tab-content" class="tab-content-panel active">
+
+            <!-- Professional Summary Card (Full-width, prominently displayed) -->
+            <div class="profile-block" id="res-summary-wrapper">
+            <div class="section-heading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <span>Professional Summary</span>
+            </div>
+            <div class="summary-card-body">
+              <p class="profile-summary-text" id="res-summary"></p>
+            </div>
+          </div>
+
+          <!-- Analysis Grid Layout -->
+          <div class="results-grid">
+            
+            <!-- Left Column: Experience, Projects -->
+            <div class="dashboard-col-left">
+              
+              <!-- Experience & Internships Timeline -->
+              <div class="profile-block" id="res-experience-wrapper">
+                <div class="section-heading">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                  </svg>
+                  <span>Work Experience & Internships</span>
+                </div>
+                <div class="timeline-container" id="timeline-experience-list">
+                  <!-- Experience timeline items rendered here -->
+                </div>
+              </div>
+
+              <!-- Projects Portfolio Section -->
+              <div class="projects-section-container" id="res-projects-wrapper">
+                <div class="section-heading">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                    <polyline points="2 17 12 22 22 17"/>
+                    <polyline points="2 12 12 17 22 12"/>
+                  </svg>
+                  <span>Projects Portfolio</span>
+                </div>
+                <div class="projects-grid" id="projects-list">
+                  <!-- Project cards rendered here -->
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right Column: Skills, Education -->
+            <div class="dashboard-col-right">
+              
+              <!-- Skills Dashboard -->
+              <div class="profile-block" id="res-skills-wrapper">
+                <div class="section-heading">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                  <span>Skills Intelligence</span>
+                </div>
+                <div class="skills-wrapper" id="skills-intelligence-dashboard">
+                  <!-- Skills categories rendered here -->
+                </div>
+              </div>
+
+              <!-- Education -->
+              <div class="profile-block" id="res-education-wrapper">
+                <div class="section-heading">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+                  </svg>
+                  <span>Education</span>
+                </div>
+                <div class="education-list" id="education-list-wrapper">
+                  <!-- Education details rendered here -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- AI Evaluation (Strengths & Improvements, Side-by-Side, Full-Width) -->
+          <div class="profile-block" id="res-insights-wrapper">
+            <div class="section-heading">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <span>AI Candidate Analysis</span>
+            </div>
+            
+            <div class="ai-insights-grid">
+              <!-- Strengths Section -->
+              <div class="insight-subsection">
+                <h4 class="insight-subtitle strengths-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Candidate Strengths
+                </h4>
+                <ul class="insight-list strengths-list" id="strengths-list-ul">
+                  <!-- Strengths list items -->
+                </ul>
+              </div>
+
+              <!-- Weaknesses Section -->
+              <div class="insight-subsection">
+                <h4 class="insight-subtitle weaknesses-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Areas for Improvement
+                </h4>
+                <ul class="insight-list weaknesses-list" id="weaknesses-list-ul">
+                  <!-- Weaknesses list items -->
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          </div><!-- /#resume-analysis-tab-content -->
+
+          <!-- Bottom bar for metadata timestamp -->
+          <div class="results-meta-footer">
+            <span id="res-timestamp"></span>
+          </div>
+
+        </div>
+
+      </div>
     </main>
 
     <!-- Footer -->
@@ -140,6 +596,6 @@
     </footer>
   </div>
 
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=5"></script>
 </body>
 </html>

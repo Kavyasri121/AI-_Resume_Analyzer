@@ -5,10 +5,15 @@ import time
 from fastapi import FastAPI, UploadFile, File, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from dotenv import load_dotenv
 
 from file_processor import extract_text_from_pdf, extract_text_from_docx
-from resume_parser import HeuristicResumeParser
+from resume_parser import HeuristicResumeParser, AIResumeParser
+from ai_analyzer import AIAnalyzer
+
+# Load environment variables
+load_dotenv()
 
 # Initialize FastAPI App
 app = FastAPI(
@@ -123,14 +128,31 @@ async def upload_resume(file: UploadFile = File(...)):
             detail=f"Failed to process text extraction: {str(e)}"
         )
 
-    # 5. Parse Text using Heuristic Engine
+    # 5. Parse Text using AI Parser Engine (Gemini)
     try:
-        parser = HeuristicResumeParser()
+        parser = AIResumeParser()
         parsed_data = parser.parse(raw_text)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error parsing resume structured content: {str(e)}"
+        )
+
+    # 5b. Gemini AI Analysis
+    try:
+        analyzer = AIAnalyzer()
+        ai_analysis = analyzer.analyze_resume(raw_text, parsed_data)
+    except ValueError as ve:
+        # Catch validation/setup issues (e.g. missing API Key) and return HTTP 400
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )
+    except Exception as e:
+        # Catch API failures and return HTTP 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"AI analysis failed to complete: {str(e)}"
         )
 
     # Prepare response data structure
@@ -144,7 +166,8 @@ async def upload_resume(file: UploadFile = File(...)):
             "extracted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         },
         "raw_text": raw_text,
-        "parsed_data": parsed_data
+        "parsed_data": parsed_data,
+        "ai_analysis": ai_analysis
     }
 
     # 6. Save Response Payload (JSON) to extracted/
@@ -153,10 +176,67 @@ async def upload_resume(file: UploadFile = File(...)):
         with open(extracted_json_path, "w", encoding="utf-8") as json_file:
             json.dump({
                 "raw_text": raw_text,
-                "parsed_data": parsed_data
+                "parsed_data": parsed_data,
+                "ai_analysis": ai_analysis
             }, json_file, indent=2, ensure_ascii=False)
     except Exception as e:
         # Non-fatal error for the user but log it
         print(f"Warning: Failed to save extracted JSON payload: {str(e)}")
 
     return response_payload
+
+
+class ATSAnalysisRequest(BaseModel):
+    file_id: str
+    target_role: str
+    experience_level: str
+    job_description: Optional[str] = ""
+
+
+@app.post("/ats_analyze")
+async def ats_analyze(payload: ATSAnalysisRequest):
+    """
+    Run ATS analysis for a previously uploaded and parsed resume file.
+    """
+    file_id = payload.file_id
+    extracted_json_path = os.path.join(EXTRACTED_DIR, f"{file_id}.json")
+
+    if not os.path.exists(extracted_json_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Parsed resume data with file ID '{file_id}' not found. Please upload the file again."
+        )
+
+    try:
+        with open(extracted_json_path, "r", encoding="utf-8") as f:
+            resume_data = json.load(f)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load parsed resume data: {str(e)}"
+        )
+
+    try:
+        from ats_analyzer import ATSAnalyzer
+        analyzer = ATSAnalyzer()
+        report = analyzer.analyze(
+            resume_data=resume_data,
+            target_role=payload.target_role,
+            experience_level=payload.experience_level,
+            job_description=payload.job_description
+        )
+        return {
+            "success": True,
+            "report": report
+        }
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"ATS analysis execution failed: {str(e)}"
+        )
+

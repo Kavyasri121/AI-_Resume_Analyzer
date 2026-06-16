@@ -31,8 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSpinner = document.getElementById('btn-spinner');
   const resetBtn = document.getElementById('reset-btn');
 
-  // --- New Results Dashboard DOM Selectors ---
+  // --- Results Dashboard DOM Selectors ---
   const resultsCard = document.getElementById('results-card');
+  const skeletonLoader = document.getElementById('skeleton-loader');
+  const dashboardContent = document.getElementById('dashboard-content');
   const resTimestamp = document.getElementById('res-timestamp');
   const resName = document.getElementById('res-name');
   const profileInitials = document.getElementById('profile-initials');
@@ -41,16 +43,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const resSocialLinks = document.getElementById('res-social-links');
   const resSummaryWrapper = document.getElementById('res-summary-wrapper');
   const resSummary = document.getElementById('res-summary');
-  const resSkillsWrapper = document.getElementById('res-skills-wrapper');
-  const resTimelineWrapper = document.getElementById('res-timeline-wrapper');
-  const jsonCodeBlock = document.getElementById('json-code-block');
-  const rawTextBlock = document.getElementById('raw-text-block');
-  const btnCopyJson = document.getElementById('btn-copy-json');
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
+  
+  // Custom Visual Containers
+  const timelineExperienceList = document.getElementById('timeline-experience-list');
+  const projectsList = document.getElementById('projects-list');
+  const skillsIntelligenceDashboard = document.getElementById('skills-intelligence-dashboard');
+  const educationListWrapper = document.getElementById('education-list-wrapper');
+  const strengthsListUl = document.getElementById('strengths-list-ul');
+  const weaknessesListUl = document.getElementById('weaknesses-list-ul');
+
+  // Tab Switcher Elements
+  const tabButtons = document.querySelectorAll('.dashboard-tabs .tab-btn');
+  const tabPanels = {
+    'resume-analysis': document.getElementById('resume-analysis-tab-content'),
+    'ats-analysis': document.getElementById('ats-analysis-tab-content')
+  };
 
   // --- State Variables ---
   let currentFile = null;
+  let currentFileId = null;
+  let selectedExperience = 'Fresher';
   let uploadTimer = null;
   let isUploading = false;
 
@@ -140,40 +152,144 @@ document.addEventListener('DOMContentLoaded', () => {
 
   analyzeBtn.addEventListener('click', triggerAnalysis);
 
-  // --- Dashboard Event Bindings ---
+  // Handle experience button toggles
+  const expButtons = document.querySelectorAll('.exp-btn');
+  expButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      expButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedExperience = btn.getAttribute('data-value');
+    });
+  });
+
+  // Target role configuration & Run ATS Analysis Trigger
+  const runAtsBtn = document.getElementById('run-ats-btn');
+  const atsBtnSpinner = document.getElementById('ats-btn-spinner');
+  const atsTargetRole = document.getElementById('ats-target-role');
+  const atsJobDesc = document.getElementById('ats-job-desc');
+  const atsSkeletonLoader = document.getElementById('ats-skeleton-loader');
+  const atsResultsContainer = document.getElementById('ats-results-container');
+
+  runAtsBtn.addEventListener('click', () => {
+    const roleValue = atsTargetRole.value.trim();
+    const jdValue = atsJobDesc.value.trim();
+
+    if (!roleValue) {
+      alert('Target Role is required.');
+      atsTargetRole.focus();
+      return;
+    }
+
+    if (!currentFileId) {
+      alert('Please upload a resume first.');
+      return;
+    }
+
+    // Toggle button loading state
+    runAtsBtn.disabled = true;
+    atsBtnSpinner.classList.remove('hidden');
+    runAtsBtn.querySelector('.btn-text').textContent = 'Analyzing ATS...';
+
+    // Show skeleton loader and hide results container
+    atsSkeletonLoader.classList.remove('hidden');
+    atsResultsContainer.classList.add('hidden');
+    
+    // Scroll to loader smoothly
+    setTimeout(() => {
+      atsSkeletonLoader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+
+    // Call POST /ats_analyze
+    fetch('http://localhost:8000/ats_analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        file_id: currentFileId,
+        target_role: roleValue,
+        experience_level: selectedExperience,
+        job_description: jdValue || null
+      })
+    })
+    .then(async (response) => {
+      if (!response.ok) {
+        let errMsg = 'ATS analysis failed.';
+        try {
+          const errData = await response.json();
+          if (errData && errData.detail) {
+            errMsg = typeof errData.detail === 'string'
+              ? errData.detail
+              : JSON.stringify(errData.detail);
+          }
+        } catch (e) {}
+        throw new Error(errMsg);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Revert loading state
+      runAtsBtn.disabled = false;
+      atsBtnSpinner.classList.add('hidden');
+      runAtsBtn.querySelector('.btn-text').textContent = 'Run ATS Analysis →';
+
+      // Hide skeleton loader, show results
+      atsSkeletonLoader.classList.add('hidden');
+      atsResultsContainer.classList.remove('hidden');
+
+      // Render ATS Report
+      renderAtsReport(data.report);
+      
+      // Scroll to results
+      setTimeout(() => {
+        atsResultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    })
+    .catch((error) => {
+      runAtsBtn.disabled = false;
+      atsBtnSpinner.classList.add('hidden');
+      runAtsBtn.querySelector('.btn-text').textContent = 'Run ATS Analysis →';
+      atsSkeletonLoader.classList.add('hidden');
+      console.error('ATS Analysis Error:', error);
+      alert(error.message || 'Error executing ATS analysis.');
+    });
+  });
+
+  // Tab switching handler
+  function switchTab(tabId) {
+    tabButtons.forEach(btn => {
+      if (btn.getAttribute('data-tab') === tabId) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    for (const [id, panel] of Object.entries(tabPanels)) {
+      if (panel) {
+        if (id === tabId) {
+          panel.classList.add('active');
+          panel.classList.remove('hidden');
+        } else {
+          panel.classList.remove('active');
+          panel.classList.add('hidden');
+        }
+      }
+    }
+  }
+
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      tabButtons.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
-      
-      btn.classList.add('active');
-      const targetTab = btn.getAttribute('data-tab');
-      const activeTabContent = document.getElementById(targetTab);
-      if (activeTabContent) {
-        activeTabContent.classList.add('active');
+      const tabId = btn.getAttribute('data-tab');
+      switchTab(tabId);
+      if (tabId === 'ats-analysis' && atsTargetRole) {
+        setTimeout(() => atsTargetRole.focus(), 100);
       }
     });
   });
 
-  if (btnCopyJson) {
-    btnCopyJson.addEventListener('click', () => {
-      const jsonText = jsonCodeBlock.textContent;
-      if (!jsonText) return;
-      
-      navigator.clipboard.writeText(jsonText).then(() => {
-        const btnTextNode = btnCopyJson.querySelector('.copy-btn-text');
-        const prevText = btnTextNode.textContent;
-        btnTextNode.textContent = 'Copied!';
-        
-        setTimeout(() => {
-          btnTextNode.textContent = prevText;
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy JSON text: ', err);
-        alert('Failed to copy to clipboard. Please select and copy manually.');
-      });
-    });
-  }
+  // --- Dashboard Event Bindings ---
+  // Outdated raw text and JSON response tabs have been deprecated in favor of the clean AI Dashboard.
 
   // --- Handlers & Controllers ---
 
@@ -300,20 +416,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function triggerAnalysis() {
     if (!currentFile || isUploading) return;
 
-    // Set button state directly to Upload Complete
+    // Set button loading state
     analyzeBtn.disabled = true;
-    btnSpinner.classList.add('hidden');
-    analyzeBtn.querySelector('.btn-text').textContent = 'Upload Complete';
+    btnSpinner.classList.remove('hidden');
+    analyzeBtn.querySelector('.btn-text').textContent = 'Analyzing...';
     removeFileBtn.style.pointerEvents = 'none'; // Lock removal during analysis
     resetBtn.disabled = true;
 
-    // Hide previous results if card exists
+    // Show results card with skeleton loader visible, hide main content
     if (resultsCard) {
-      resultsCard.classList.add('hidden');
+      resultsCard.classList.remove('hidden');
+      if (skeletonLoader) skeletonLoader.classList.remove('hidden');
+      if (dashboardContent) dashboardContent.classList.add('hidden');
+      // Scroll to the results card to show progress
+      setTimeout(() => {
+        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
-
-    // Display popup message immediately
-    alert('Resume is uploaded');
 
     // Clear previous validation messages
     clearMessages();
@@ -328,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(async (response) => {
       if (!response.ok) {
-        let errMsg = 'Failed to upload the resume.';
+        let errMsg = 'Failed to analyze the resume.';
         try {
           const errData = await response.json();
           if (errData && errData.detail) {
@@ -344,25 +463,27 @@ document.addEventListener('DOMContentLoaded', () => {
       resetButtonLoadingState();
 
       // Show completed message
-      showValidationMessage('Resume uploaded successfully!', 'success');
+      showValidationMessage('AI analysis completed successfully!', 'success');
 
-      // Popup message after uploading succeeds
-      alert('Resume is uploaded');
-
-      // Populate results dashboard
+      // Populate and transition results dashboard
       displayResults(data);
     })
     .catch((error) => {
       // Revert loading state
       resetButtonLoadingState();
       
-      // Show error message
+      // Hide results card on error
+      if (resultsCard) {
+        resultsCard.classList.add('hidden');
+      }
+
+      // Show error message in upload zone
       showValidationMessage(error.message || 'Error connecting to backend API.', 'error');
     });
   }
 
   function resetButtonLoadingState() {
-    analyzeBtn.querySelector('.btn-text').textContent = 'Upload Resume';
+    analyzeBtn.querySelector('.btn-text').textContent = 'Analyze Resume';
     btnSpinner.classList.add('hidden');
     analyzeBtn.disabled = false;
     removeFileBtn.style.pointerEvents = 'auto';
@@ -372,15 +493,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Populate and render Results Dashboard from parsed API response
   function displayResults(data) {
     if (!resultsCard) return;
+    
+    // Ensure we switch to the general resume analysis tab initially
+    switchTab('resume-analysis');
+    currentFileId = data.metadata ? data.metadata.file_id : null;
     const parsed = data.parsed_data || {};
+    const ai = data.ai_analysis || {};
     
     // 1. Metadata Timestamp
     const timestampStr = data.metadata && data.metadata.extracted_at 
       ? new Date(data.metadata.extracted_at).toLocaleString() 
       : new Date().toLocaleString();
-    resTimestamp.textContent = `Analyzed: ${timestampStr} | File ID: ${data.metadata ? data.metadata.file_id : 'N/A'}`;
+    resTimestamp.textContent = `AI analysis complete | File ID: ${data.metadata ? data.metadata.file_id : 'N/A'} | Timestamp: ${timestampStr}`;
 
-    // 2. Profile Info Header
+    // 2. Profile Info Header (Name and Avatar)
     resName.textContent = parsed.name || 'Candidate Name';
     
     // Initials extraction
@@ -418,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Social & Professional links badges
     resSocialLinks.innerHTML = '';
     const links = parsed.links || {};
-    const platformSVGs = {
+    const platformIcons = {
       linkedin: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>`,
       github: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>`,
       leetcode: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>`,
@@ -435,163 +561,244 @@ document.addEventListener('DOMContentLoaded', () => {
         badge.rel = 'noopener noreferrer';
         badge.className = 'profile-link-badge';
         badge.title = platform.charAt(0).toUpperCase() + platform.slice(1);
-        badge.innerHTML = platformSVGs[platform] || platformSVGs.portfolio;
+        badge.innerHTML = platformIcons[platform] || platformIcons.portfolio;
         resSocialLinks.appendChild(badge);
       }
     }
 
-    // 3. Summary Block
-    if (parsed.summary && parsed.summary.trim()) {
-      resSummary.textContent = parsed.summary;
+    // 3. AI Professional Summary Card
+    if (ai.summary && ai.summary.trim()) {
+      resSummary.textContent = ai.summary;
       resSummaryWrapper.classList.remove('hidden');
     } else {
       resSummaryWrapper.classList.add('hidden');
     }
 
-    // 4. Skills Groups
-    resSkillsWrapper.innerHTML = '';
-    const skillsGroups = [
-      { name: 'Technical Skills', key: 'technical_skills' },
-      { name: 'Soft Skills', key: 'soft_skills' },
-      { name: 'Skills & Proficiencies', key: 'skills' }
-    ];
+    // 4. AI Skills Dashboard (Categorized)
+    skillsIntelligenceDashboard.innerHTML = '';
+    const techSkills = ai.technical_skills || [];
+    const softSkills = ai.soft_skills || [];
 
-    let hasAnySkills = false;
-    skillsGroups.forEach(group => {
-      const list = parsed[group.key] || [];
-      if (list.length > 0) {
-        hasAnySkills = true;
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'skills-group';
+    if (techSkills.length > 0) {
+      const techGroup = document.createElement('div');
+      techGroup.className = 'skills-group';
+      techGroup.innerHTML = `
+        <span class="skills-group-title">Technical Skills</span>
+        <div class="skills-tags">
+          ${techSkills.map(s => `<span class="skill-tag">${s}</span>`).join('')}
+        </div>
+      `;
+      skillsIntelligenceDashboard.appendChild(techGroup);
+    }
+
+    if (softSkills.length > 0) {
+      const softGroup = document.createElement('div');
+      softGroup.className = 'skills-group';
+      softGroup.innerHTML = `
+        <span class="skills-group-title">Soft Skills</span>
+        <div class="skills-tags">
+          ${softSkills.map(s => `<span class="skill-tag">${s}</span>`).join('')}
+        </div>
+      `;
+      skillsIntelligenceDashboard.appendChild(softGroup);
+    }
+
+    if (techSkills.length === 0 && softSkills.length === 0) {
+      skillsIntelligenceDashboard.innerHTML = '<p class="empty-state-text">No skills detected on candidate resume.</p>';
+    }
+
+    // 5. Timeline Experience + Internships Layout
+    timelineExperienceList.innerHTML = '';
+    const experienceLines = parsed.experience || [];
+    const internshipsLines = parsed.internships || [];
+    const timelineItems = [];
+
+    // Helper function to convert raw lines of text into structured timeline events
+    function parseLinesToEvents(lines) {
+      let currentItem = null;
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
         
-        const titleSpan = document.createElement('span');
-        titleSpan.className = 'skills-group-title';
-        titleSpan.textContent = group.name;
-        groupDiv.appendChild(titleSpan);
-
-        const tagsDiv = document.createElement('div');
-        tagsDiv.className = 'skills-tags';
-
-        list.forEach(skill => {
-          const tag = document.createElement('span');
-          tag.className = 'skill-tag';
-          tag.textContent = skill;
-          tagsDiv.appendChild(tag);
-        });
-
-        groupDiv.appendChild(tagsDiv);
-        resSkillsWrapper.appendChild(groupDiv);
+        // If it starts with typical bullet characters, it belongs to the active company header
+        if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
+          if (currentItem) {
+            currentItem.bullets.push(trimmed.replace(/^[•\-\*]\s*/, ''));
+          }
+        } else {
+          if (currentItem) {
+            timelineItems.push(currentItem);
+          }
+          const parts = trimmed.split('|').map(p => p.trim());
+          currentItem = {
+            title: parts[0] || 'Position',
+            subtitle: parts[1] || '',
+            bullets: []
+          };
+        }
+      });
+      if (currentItem) {
+        timelineItems.push(currentItem);
       }
-    });
-
-    if (!hasAnySkills) {
-      const fallback = document.createElement('p');
-      fallback.style.color = 'var(--text-light)';
-      fallback.style.fontSize = '0.9rem';
-      fallback.textContent = 'No skills explicitly parsed.';
-      resSkillsWrapper.appendChild(fallback);
     }
 
-    // 5. Timeline Wrapper (Education, Experience, Projects, etc.)
-    resTimelineWrapper.innerHTML = '';
-    const timelineSections = [
-      { name: 'Professional Experience', key: 'experience' },
-      { name: 'Internships & Training', key: 'internships' },
-      { name: 'Projects', key: 'projects' },
-      { name: 'Education', key: 'education' },
-      { name: 'Certifications', key: 'certifications' },
-      { name: 'Achievements & Awards', key: 'achievements' },
-      { name: 'Publications', key: 'publications' },
-      { name: 'Languages', key: 'languages' },
-      { name: 'Interests & Activities', key: 'interests' }
-    ];
+    parseLinesToEvents(experienceLines);
+    parseLinesToEvents(internshipsLines);
 
-    let hasAnyTimeline = false;
-    timelineSections.forEach(sec => {
-      const items = parsed[sec.key] || [];
-      if (items.length > 0) {
-        hasAnyTimeline = true;
+    // If parsing structured timeline items failed, fallback to flat rendering
+    if (timelineItems.length === 0) {
+      const combinedLines = [...experienceLines, ...internshipsLines];
+      if (combinedLines.length === 0) {
+        timelineExperienceList.innerHTML = '<p class="empty-state-text">No work history or internship details listed.</p>';
+      } else {
+        combinedLines.forEach(line => {
+          const card = document.createElement('div');
+          card.className = 'timeline-item-card';
+          card.innerHTML = `
+            <div class="timeline-dot"></div>
+            <div class="timeline-desc">${line}</div>
+          `;
+          timelineExperienceList.appendChild(card);
+        });
+      }
+    } else {
+      timelineItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'timeline-item-card';
+
+        // Extract dates in parentheses (e.g., "(2024 - Present)")
+        let dateStr = '';
+        let subtitleText = item.subtitle;
+        const dateMatch = item.subtitle.match(/\(([^)]+)\)/);
+        if (dateMatch) {
+          dateStr = dateMatch[1];
+          subtitleText = item.subtitle.replace(/\([^)]+\)/, '').trim();
+        }
+
+        card.innerHTML = `
+          <div class="timeline-dot"></div>
+          <div class="timeline-header">
+            <div>
+              <h4 class="timeline-title">${item.title}</h4>
+              ${subtitleText ? `<span class="timeline-subtitle">${subtitleText}</span>` : ''}
+            </div>
+            ${dateStr ? `<span class="timeline-date">${dateStr}</span>` : ''}
+          </div>
+          ${item.bullets.length > 0 ? `
+            <ul class="timeline-desc" style="padding-left: 1.15rem; margin-top: 0.5rem; list-style-type: disc;">
+              ${item.bullets.map(b => `<li style="margin-bottom:0.25rem;">${b}</li>`).join('')}
+            </ul>
+          ` : ''}
+        `;
+        timelineExperienceList.appendChild(card);
+      });
+    }
+
+    // 6. Projects Portfolio Display (Clean Cards and AI Analyzed descriptions)
+    projectsList.innerHTML = '';
+    const projects = ai.projects || [];
+    if (projects.length === 0) {
+      projectsList.innerHTML = '<p class="empty-state-text">No project analysis details available.</p>';
+    } else {
+      projects.forEach((proj, idx) => {
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        // Add staggered animation delay
+        card.style.animationDelay = `${idx * 0.15}s`;
+        card.style.opacity = '0'; // Initial state for fade-in animation
+        card.style.animation = 'slideUp var(--transition-normal) forwards';
         
-        const blockDiv = document.createElement('div');
-        blockDiv.className = 'timeline-section-block';
+        const techTags = proj.technologies && proj.technologies.length > 0
+          ? `<div class="project-tech-tags">
+               ${proj.technologies.map(tech => `<span class="project-tech-tag">${tech}</span>`).join('')}
+             </div>`
+          : '';
 
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'timeline-section-title';
-        titleDiv.textContent = sec.name;
-        blockDiv.appendChild(titleDiv);
-
-        const listDiv = document.createElement('div');
-        listDiv.className = 'timeline-list';
-
-        items.forEach(item => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'timeline-item';
-          itemDiv.textContent = item;
-          listDiv.appendChild(itemDiv);
-        });
-
-        blockDiv.appendChild(listDiv);
-        resTimelineWrapper.appendChild(blockDiv);
-      }
-    });
-
-    // Custom headers from other_sections
-    const otherSections = parsed.other_sections || {};
-    for (const [secName, items] of Object.entries(otherSections)) {
-      if (items && items.length > 0) {
-        hasAnyTimeline = true;
-
-        const blockDiv = document.createElement('div');
-        blockDiv.className = 'timeline-section-block';
-
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'timeline-section-title';
-        titleDiv.textContent = secName;
-        blockDiv.appendChild(titleDiv);
-
-        const listDiv = document.createElement('div');
-        listDiv.className = 'timeline-list';
-
-        items.forEach(item => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'timeline-item';
-          itemDiv.textContent = item;
-          listDiv.appendChild(itemDiv);
-        });
-
-        blockDiv.appendChild(listDiv);
-        resTimelineWrapper.appendChild(blockDiv);
-      }
+        card.innerHTML = `
+          <div class="project-card-header">
+            <h4 class="project-card-title">${proj.title || 'Featured Project'}</h4>
+          </div>
+          <p class="project-card-desc">${proj.description || ''}</p>
+          ${techTags}
+        `;
+        projectsList.appendChild(card);
+      });
     }
 
-    if (!hasAnyTimeline) {
-      const fallback = document.createElement('p');
-      fallback.style.color = 'var(--text-light)';
-      fallback.style.fontSize = '0.9rem';
-      fallback.textContent = 'No structured timeline data found.';
-      resTimelineWrapper.appendChild(fallback);
+    // 7. Education Display
+    educationListWrapper.innerHTML = '';
+    const education = parsed.education || [];
+    if (education.length === 0) {
+      educationListWrapper.innerHTML = '<p class="empty-state-text">No education history listed.</p>';
+    } else {
+      education.forEach(eduItem => {
+        const item = document.createElement('div');
+        item.className = 'education-item';
+        
+        const parts = eduItem.split('|').map(p => p.trim());
+        if (parts.length > 1) {
+          item.innerHTML = `
+            <h4 class="timeline-title">${parts[0]}</h4>
+            <div style="display:flex; justify-content:space-between; margin-top:0.25rem; font-size:0.85rem; color:var(--text-muted);">
+              <span>${parts[1]}</span>
+              ${parts[2] ? `<span class="timeline-date">${parts[2]}</span>` : ''}
+            </div>
+          `;
+        } else {
+          item.innerHTML = `<p class="timeline-desc">${eduItem}</p>`;
+        }
+        educationListWrapper.appendChild(item);
+      });
     }
 
-    // 6. JSON View Tab
-    jsonCodeBlock.textContent = JSON.stringify(data, null, 2);
+    // 8. Strengths Insights Display
+    strengthsListUl.innerHTML = '';
+    const strengths = ai.strengths || [];
+    if (strengths.length === 0) {
+      strengthsListUl.innerHTML = '<li class="empty-state-text">No strengths identified.</li>';
+    } else {
+      strengths.forEach(strVal => {
+        const li = document.createElement('li');
+        li.className = 'insight-item';
+        li.textContent = strVal;
+        strengthsListUl.appendChild(li);
+      });
+    }
 
-    // 7. Raw Text Tab
-    rawTextBlock.textContent = data.raw_text || '';
+    // 9. Weaknesses (Areas For Improvement) Insights Display
+    weaknessesListUl.innerHTML = '';
+    const weaknesses = ai.weaknesses || [];
+    if (weaknesses.length === 0) {
+      weaknessesListUl.innerHTML = '<li class="empty-state-text">No gaps identified in the analysis.</li>';
+    } else {
+      weaknesses.forEach(weakVal => {
+        const li = document.createElement('li');
+        li.className = 'insight-item';
+        li.textContent = weakVal;
+        weaknessesListUl.appendChild(li);
+      });
+    }
 
-    // Remove hidden class and scroll results dashboard into view
-    resultsCard.classList.remove('hidden');
-    
-    // Small timeout to let rendering trigger and then scroll
-    setTimeout(() => {
-      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    // Swap loading state to dashboard presentation with smooth animations
+    if (skeletonLoader) skeletonLoader.classList.add('hidden');
+    if (dashboardContent) {
+      dashboardContent.classList.remove('hidden');
+      // Scroll dashboard into view
+      setTimeout(() => {
+        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   }
 
   // Reset helper
   function resetState() {
+    // Reset tabs active state
+    switchTab('resume-analysis');
+
     clearInterval(uploadTimer);
     isUploading = false;
     currentFile = null;
+    currentFileId = null;
     fileInput.value = '';
 
     // Hide/Show correct nodes
@@ -599,9 +806,25 @@ document.addEventListener('DOMContentLoaded', () => {
     progressSection.classList.add('hidden');
     previewCard.classList.add('hidden');
     resetBtn.classList.add('hidden');
+    
     if (resultsCard) {
       resultsCard.classList.add('hidden');
     }
+
+    // Hide ATS results & loader
+    if (atsResultsContainer) atsResultsContainer.classList.add('hidden');
+    if (atsSkeletonLoader) atsSkeletonLoader.classList.add('hidden');
+    if (atsTargetRole) atsTargetRole.value = '';
+    if (atsJobDesc) atsJobDesc.value = '';
+    
+    // Reset experience level buttons
+    expButtons.forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('data-value') === 'Fresher') {
+        btn.classList.add('active');
+      }
+    });
+    selectedExperience = 'Fresher';
 
     // Reset analyze button states
     analyzeBtn.disabled = true;
@@ -630,5 +853,374 @@ document.addEventListener('DOMContentLoaded', () => {
     messageBox.classList.add('hidden');
     messageText.textContent = '';
     messageIcon.innerHTML = '';
+  }
+
+  function renderAtsReport(report) {
+    // 1. Overall Score Card
+    const score = report.ats_score || 0;
+    const status = report.readiness_status || 'Strong';
+    
+    // SVG circular progress bar: stroke-dasharray is 263.89
+    const circleBar = document.getElementById('ats-circle-bar');
+    if (circleBar) {
+      const offset = 263.89 * (1 - score / 100);
+      circleBar.style.strokeDashoffset = offset;
+    }
+    
+    const scoreText = document.getElementById('ats-score-text');
+    if (scoreText) {
+      scoreText.textContent = score;
+    }
+    
+    const statusTitle = document.getElementById('ats-readiness-status');
+    if (statusTitle) {
+      statusTitle.textContent = status;
+    }
+    
+    const statusDesc = document.getElementById('ats-readiness-desc');
+    if (statusDesc) {
+      let topPercent = 95;
+      if (score >= 85) {
+        topPercent = Math.max(2, Math.round(15 - (score - 85) * 0.8));
+      } else if (score >= 70) {
+        topPercent = Math.round(35 - (score - 70) * 1.3);
+      } else if (score >= 55) {
+        topPercent = Math.round(65 - (score - 55) * 2.0);
+      } else {
+        topPercent = Math.round(98 - score * 0.6);
+      }
+      statusDesc.innerHTML = `Your resume is in the <strong>top ${topPercent}%</strong> of applicants for <strong>${report.target_role}</strong>.`;
+    }
+
+    // 2. Category Breakdown
+    const breakdownList = document.getElementById('ats-breakdown-list');
+    if (breakdownList) {
+      breakdownList.innerHTML = '';
+      
+      function getProgressBarColor(categoryScore) {
+        if (categoryScore >= 85) return 'var(--success)';
+        if (categoryScore >= 70) return '#3b82f6';
+        if (categoryScore >= 55) return '#f59e0b';
+        return 'var(--danger)';
+      }
+      
+      const categories = Object.keys(report.breakdown || {});
+      categories.forEach(cat => {
+        const catVal = report.breakdown[cat];
+        const color = getProgressBarColor(catVal);
+        
+        const item = document.createElement('div');
+        item.className = 'category-progress-item';
+        item.innerHTML = `
+          <div class="category-progress-header">
+            <span class="category-progress-label">${cat}</span>
+            <span class="category-progress-val" style="color: ${color};">${catVal}%</span>
+          </div>
+          <div class="category-progress-bar-bg">
+            <div class="category-progress-bar-fill" style="width: ${catVal}%; background-color: ${color};"></div>
+          </div>
+        `;
+        breakdownList.appendChild(item);
+      });
+    }
+
+    const breakdownMeta = document.getElementById('ats-breakdown-meta');
+    if (breakdownMeta) {
+      const modeText = report.job_description_provided ? 'JD MATCH MODE' : 'GENERIC ROLE EXPECTATIONS';
+      breakdownMeta.innerHTML = `
+        <span class="badge" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.65rem;">LEVEL: ${report.experience_level.toUpperCase()}</span>
+        <span class="badge" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.65rem;">MODE: ${modeText}</span>
+        <span class="badge" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.65rem;">PARSED CLEANLY</span>
+      `;
+    }
+
+    // 3. ATS Score Calculation View
+    const weightedProgressBar = document.getElementById('ats-weighted-progress-bar');
+    if (weightedProgressBar) {
+      weightedProgressBar.innerHTML = `
+        <div class="weighted-seg weighted-seg-1" style="width: 20%;" title="Resume Completeness: 20%"></div>
+        <div class="weighted-seg weighted-seg-2" style="width: 20%;" title="Skills Quality: 20%"></div>
+        <div class="weighted-seg weighted-seg-3" style="width: 15%;" title="Projects Quality: 15%"></div>
+        <div class="weighted-seg weighted-seg-4" style="width: 15%;" title="Experience Quality: 15%"></div>
+        <div class="weighted-seg weighted-seg-5" style="width: 15%;" title="Keyword Optimization: 15%"></div>
+        <div class="weighted-seg weighted-seg-6" style="width: 5%;" title="Certifications: 5%"></div>
+        <div class="weighted-seg weighted-seg-7" style="width: 5%;" title="ATS Readability: 5%"></div>
+        <div class="weighted-seg weighted-seg-8" style="width: 5%;" title="Achievement Impact: 5%"></div>
+      `;
+    }
+
+    const weightedLegend = document.getElementById('ats-weighted-legend');
+    if (weightedLegend) {
+      const legendData = [
+        { name: 'Completeness', weight: 20, cls: 'weighted-seg-1' },
+        { name: 'Skills Quality', weight: 20, cls: 'weighted-seg-2' },
+        { name: 'Projects Quality', weight: 15, cls: 'weighted-seg-3' },
+        { name: 'Experience Quality', weight: 15, cls: 'weighted-seg-4' },
+        { name: 'Keywords Match', weight: 15, cls: 'weighted-seg-5' },
+        { name: 'Certifications', weight: 5, cls: 'weighted-seg-6' },
+        { name: 'ATS Readability', weight: 5, cls: 'weighted-seg-7' },
+        { name: 'Achievement Impact', weight: 5, cls: 'weighted-seg-8' }
+      ];
+      weightedLegend.innerHTML = legendData.map(item => `
+        <div class="legend-item">
+          <span class="legend-color-dot ${item.cls}"></span>
+          <span>${item.name} ${item.weight}%</span>
+        </div>
+      `).join('');
+    }
+
+    const calcGrid = document.getElementById('ats-calculation-grid');
+    if (calcGrid) {
+      calcGrid.innerHTML = '';
+      const order = [
+        { key: 'Resume Completeness', title: 'Completeness', weight: 20 },
+        { key: 'Skills Quality', title: 'Skills Match', weight: 20 },
+        { key: 'Projects Quality', title: 'Projects', weight: 15 },
+        { key: 'Experience Quality', title: 'Experience', weight: 15 },
+        { key: 'Keyword Optimization', title: 'Keywords', weight: 15 },
+        { key: 'Certifications', title: 'Certifications', weight: 5 },
+        { key: 'ATS Readability', title: 'Readability', weight: 5 },
+        { key: 'Achievement Impact', title: 'Impact', weight: 5 }
+      ];
+      
+      order.forEach(item => {
+        const score = report.breakdown[item.key] || 0;
+        const contrib = report.contributions[item.key] || 0;
+        const card = document.createElement('div');
+        card.className = 'calc-card';
+        
+        let statusBadge = 'STRONG';
+        let statusCls = 'style="color: var(--success);"';
+        if (score >= 85) {
+          statusBadge = 'STRONG';
+        } else if (score >= 55) {
+          statusBadge = 'AVERAGE';
+          statusCls = 'style="color: #d97706;"';
+        } else {
+          statusBadge = 'NEEDS WORK';
+          statusCls = 'style="color: var(--danger);"';
+        }
+        
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.15rem;">
+            <span class="calc-card-title">${item.title}</span>
+            <span style="font-size: 0.6rem; font-weight: 700; ${statusCls}">${statusBadge}</span>
+          </div>
+          <div class="calc-card-score">${score}/100</div>
+          <div style="font-size: 0.7rem; color: var(--text-light); font-weight: 500;">weight ×${item.weight}%</div>
+          <div class="calc-card-contrib">+${contrib.toFixed(1)} pts</div>
+        `;
+        calcGrid.appendChild(card);
+      });
+    }
+
+    // 4. Keyword Analysis Match
+    const detKw = report.detected_keywords || [];
+    const missKw = report.missing_keywords || [];
+    const kwTotal = detKw.length + missKw.length;
+    
+    const kwMatchVal = document.getElementById('ats-keywords-match-ratio-val');
+    if (kwMatchVal) {
+      kwMatchVal.textContent = `${detKw.length}/${kwTotal}`;
+    }
+    
+    const detectedGroup = document.getElementById('ats-detected-keywords');
+    if (detectedGroup) {
+      if (detKw.length === 0) {
+        detectedGroup.innerHTML = '<span style="font-size:0.85rem; color:var(--text-light); font-style:italic;">No target keywords detected.</span>';
+      } else {
+        detectedGroup.innerHTML = detKw.map(kw => `
+          <span class="keyword-chip matched">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            ${kw}
+          </span>
+        `).join('');
+      }
+    }
+    
+    const missingGroup = document.getElementById('ats-missing-keywords');
+    if (missingGroup) {
+      if (missKw.length === 0) {
+        missingGroup.innerHTML = '<span style="font-size:0.85rem; color:var(--success); font-weight: 600;">No missing keywords! Excellent coverage.</span>';
+      } else {
+        missingGroup.innerHTML = missKw.map(kw => `
+          <span class="keyword-chip missing" title="Suggested keyword">+ ${kw}</span>
+        `).join('');
+      }
+    }
+
+    // 5. Role Alignment Analysis
+    const alignmentContent = document.getElementById('ats-alignment-content');
+    if (alignmentContent) {
+      const matchedSkills = report.matched_skills || [];
+      const missingSkills = report.missing_skills || [];
+      
+      if (report.job_description_provided) {
+        const skillsTotal = matchedSkills.length + missingSkills.length;
+        const skillsRatio = skillsTotal > 0 ? (matchedSkills.length / skillsTotal) : 0.8;
+        const keywordsRatio = kwTotal > 0 ? (detKw.length / kwTotal) : 0.8;
+        const jdMatchScore = Math.round((skillsRatio * 0.6 + keywordsRatio * 0.4) * 100);
+        
+        alignmentContent.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.25rem;">
+            <span style="font-weight:700; font-size:0.95rem; color: var(--text-main);">JD Match Score</span>
+            <span style="font-weight:800; font-size:1.2rem; color:var(--primary); font-family: var(--font-header);">${jdMatchScore}%</span>
+          </div>
+          <div class="category-progress-bar-bg" style="height:10px;">
+            <div class="category-progress-bar-fill" style="width: ${jdMatchScore}%; background-color: var(--primary); transition: width 0.8s ease-in-out;"></div>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; font-size:0.85rem; line-height: 1.4;">
+            <div>
+              <strong style="color: var(--success-text); display: block; margin-bottom: 0.2rem;">Matching Skills:</strong>
+              ${matchedSkills.length > 0 
+                ? `<div style="display:flex; flex-wrap:wrap; gap:0.25rem;">${matchedSkills.map(s => `<span class="skill-tag" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; background-color: #ecfdf5; color: #059669; border-color: #a7f3d0;">${s}</span>`).join('')}</div>`
+                : '<span style="color:var(--text-light); font-style:italic;">None detected</span>'
+              }
+            </div>
+            <div>
+              <strong style="color: var(--danger-text); display: block; margin-bottom: 0.2rem;">Missing Role Skills:</strong>
+              ${missingSkills.length > 0 
+                ? `<div style="display:flex; flex-wrap:wrap; gap:0.25rem;">${missingSkills.map(s => `<span class="skill-tag" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; background-color: #fff1f2; color: #e11d48; border-color: #fecdd3;">${s}</span>`).join('')}</div>`
+                : '<span style="color:var(--success); font-weight:600;">No skills gaps!</span>'
+              }
+            </div>
+          </div>
+        `;
+      } else {
+        const skillsScore = report.breakdown["Skills Quality"] || 75;
+        alignmentContent.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.25rem;">
+            <span style="font-weight:700; font-size:0.95rem; color: var(--text-main);">Role Alignment Score</span>
+            <span style="font-weight:800; font-size:1.2rem; color:var(--primary); font-family: var(--font-header);">${skillsScore}%</span>
+          </div>
+          <div class="category-progress-bar-bg" style="height:10px;">
+            <div class="category-progress-bar-fill" style="width: ${skillsScore}%; background-color: var(--primary); transition: width 0.8s ease-in-out;"></div>
+          </div>
+          
+          <p style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; margin-top: 0.25rem;">
+            Evaluated against general industry expectations for a <strong>${report.experience_level}</strong> role as a <strong>${report.target_role}</strong>.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.25rem; font-size:0.85rem; line-height: 1.4;">
+            <div>
+              <strong style="color: var(--text-main); display: block; margin-bottom: 0.2rem;">Missing Competencies:</strong>
+              ${missingSkills.length > 0 
+                ? `<div style="display:flex; flex-wrap:wrap; gap:0.25rem;">${missingSkills.map(s => `<span class="skill-tag" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; background-color: #fffbeb; color: #d97706; border-color: #fde68a;">${s}</span>`).join('')}</div>`
+                : '<span style="color:var(--text-light); font-style:italic;">None listed</span>'
+              }
+            </div>
+            <div>
+              <strong style="color: var(--text-main); display: block; margin-bottom: 0.2rem;">Role-Specific Recommendations:</strong>
+              <div class="section-audit-suggestion-item" style="margin-top: 0.15rem; font-size: 0.8rem; background-color: var(--primary-light); color: var(--primary); padding: 0.4rem 0.6rem; border-radius: 6px; border-left: 3px solid var(--primary);">
+                Ensure your resume highlights core competencies like ${missKw.slice(0, 3).join(', ') || 'relevant technologies'}.
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 6. Section-wise Resume Analysis
+    const missingB = report.missing_sections || [];
+    const missingBanner = document.getElementById('ats-missing-sections-banner');
+    const missingList = document.getElementById('ats-missing-sections-list');
+    
+    if (missingB.length > 0) {
+      if (missingBanner) missingBanner.classList.remove('hidden');
+      if (missingList) missingList.textContent = missingB.join(', ');
+    } else {
+      if (missingBanner) missingBanner.classList.add('hidden');
+    }
+
+    const auditsList = document.getElementById('ats-section-audits-list');
+    if (auditsList) {
+      auditsList.innerHTML = '';
+      
+      const sections = Object.keys(report.section_analysis || {});
+      sections.forEach(secName => {
+        const secData = report.section_analysis[secName];
+        const card = document.createElement('div');
+        card.className = 'section-audit-card';
+        
+        const numIssues = secData.issues ? secData.issues.length : 0;
+        let headerSubtext = '';
+        let borderLeftColor = '#10b981';
+        
+        if (numIssues === 0) {
+          headerSubtext = '<span style="color:var(--success); font-size:0.8rem; font-weight:600;">No issues — parsed cleanly</span>';
+        } else {
+          headerSubtext = `<span style="color:#d97706; font-size:0.8rem; font-weight:600;">${numIssues} ${numIssues === 1 ? 'issue' : 'issues'} to address</span>`;
+          borderLeftColor = numIssues >= 2 ? 'var(--danger)' : '#f59e0b';
+        }
+        
+        let issuesHtml = '';
+        if (numIssues > 0) {
+          issuesHtml = '<div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.25rem;">' +
+            secData.issues.map((iss, index) => {
+              const badgeType = index === 0 && numIssues >= 2 ? 'critical' : 'warning';
+              return `
+                <div class="section-audit-issue-item">
+                  <span class="section-audit-issue-badge ${badgeType}">${badgeType}</span>
+                  <span>${iss}</span>
+                </div>
+              `;
+            }).join('') +
+            '</div>';
+        }
+        
+        let suggestionsHtml = '';
+        if (secData.suggestions && secData.suggestions.length > 0) {
+          suggestionsHtml = '<div style="display:flex; flex-direction:column; gap:0.4rem; margin-top:0.4rem;">' +
+            secData.suggestions.map(sug => `
+              <div class="section-audit-suggestion-item">
+                <strong>Suggestion:</strong> ${sug}
+              </div>
+            `).join('') +
+            '</div>';
+        }
+        
+        card.style.borderLeft = `4px solid ${borderLeftColor}`;
+        card.innerHTML = `
+          <div class="section-audit-header" style="border-left:none; padding-left:0;">
+            <div>
+              <h4 class="section-audit-title">${secName}</h4>
+              <div style="margin-top:0.15rem;">${headerSubtext}</div>
+            </div>
+            <div class="section-audit-score">${secData.score} <span style="font-size:0.65rem; color:var(--text-light); font-weight:normal;">SCORE</span></div>
+          </div>
+          ${issuesHtml}
+          ${suggestionsHtml}
+        `;
+        auditsList.appendChild(card);
+      });
+    }
+
+    // 7. Optimization Roadmap
+    const roadmapList = document.getElementById('ats-roadmap-list');
+    if (roadmapList) {
+      roadmapList.innerHTML = '';
+      const roadmapData = report.roadmap || [];
+      if (roadmapData.length === 0) {
+        roadmapList.innerHTML = '<p class="empty-state-text">Your resume is perfectly optimized. No changes recommended!</p>';
+      } else {
+        const sortedRoadmap = [...roadmapData].sort((a, b) => a.priority - b.priority);
+        sortedRoadmap.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'roadmap-card';
+          card.innerHTML = `
+            <div class="roadmap-priority-badge p${item.priority}">P${item.priority}</div>
+            <div class="roadmap-content">
+              <h4 class="roadmap-title">${item.issue}</h4>
+              <p class="roadmap-why"><strong>Why it matters:</strong> ${item.why_it_matters}</p>
+              <p class="roadmap-how"><strong>How to improve:</strong> ${item.how_to_improve}</p>
+            </div>
+          `;
+          roadmapList.appendChild(card);
+        });
+      }
+    }
   }
 });
