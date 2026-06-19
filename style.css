@@ -1820,5 +1820,208 @@ body {
   }
 }
 
+/* --- Interview Preparation Dashboard Styles --- */
+.question-card {
+  background-color: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.question-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.question-card.expanded {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.question-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.question-card-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.question-card-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* Difficulty badges */
+.diff-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.diff-badge.easy {
+  background-color: var(--success-light);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+
+.diff-badge.medium {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.diff-badge.hard {
+  background-color: var(--danger-light);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
+}
+
+.category-badge {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid rgba(79, 70, 229, 0.08);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* Expandable guide section */
+.question-card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+  padding: 0;
+  border-top: 1px dashed transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.question-card.expanded .question-card-body {
+  max-height: 1000px;
+  padding-top: 1rem;
+  border-top-color: var(--border-color);
+  margin-top: 0.25rem;
+}
+
+.guide-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.guide-item-title {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.guide-item-content {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Roadmap check items */
+.roadmap-step-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.roadmap-step-bullet {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.roadmap-step-text {
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.priority-header {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.priority-header::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+}
+
+.priority-header.p1 { color: var(--danger); }
+.priority-header.p1::before { background-color: var(--danger); }
+
+.priority-header.p2 { color: #d97706; }
+.priority-header.p2::before { background-color: #d97706; }
+
+.priority-header.p3 { color: var(--info); }
+.priority-header.p3::before { background-color: var(--info); }
+
+@media (max-width: 600px) {
+  .interview-filters-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .interview-filters-row > div {
+    width: 100%;
+  }
+  .question-card-header {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .question-card-meta {
+    align-self: flex-end;
+  }
+}
+
+
 
 

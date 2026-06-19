@@ -32,33 +32,23 @@ def test_ai_analyzer_mocked():
         }
     }
 
-    # Mock responses for the four prompts
-    mock_summary_res = MagicMock()
-    mock_summary_res.text = '{"summary": "A talented software engineer with a strong foundation in Python and React."}'
-
-    mock_skills_res = MagicMock()
-    mock_skills_res.text = '{"technical_skills": ["Python", "React"], "soft_skills": ["Problem Solving"]}'
-
-    mock_strengths_res = MagicMock()
-    mock_strengths_res.text = '{"strengths": ["Strong coding background", "Experienced with React UI"]}'
-
-    mock_weaknesses_res = MagicMock()
-    mock_weaknesses_res.text = '{"weaknesses": ["No formal internship experience listed", "Limited cloud certification exposure"]}'
-
-    mock_projects_res = MagicMock()
-    mock_projects_res.text = '{"projects": [{"title": "Task App", "description": "Developed a task scheduler with drag and drop capabilities.", "technologies": ["React", "CSS"]}]}'
+    # Mock responses for the single consolidated prompt
+    mock_consolidated_res = MagicMock()
+    mock_consolidated_res.text = (
+        '{"summary": "A talented software engineer with a strong foundation in Python and React.", '
+        '"technical_skills": ["Python", "React"], "soft_skills": ["Problem Solving"], '
+        '"strengths": ["Strong coding background", "Experienced with React UI"], '
+        '"weaknesses": ["No formal internship experience listed", "Limited cloud certification exposure"], '
+        '"projects": [{"title": "Task App", "description": "Developed a task scheduler with drag and drop capabilities.", "technologies": ["React", "CSS"]}]}'
+    )
 
     with patch('google.genai.Client') as mock_client_class:
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
         
-        # Configure client models.generate_content mock to return the mock responses in order
+        # Configure client models.generate_content mock to return the mock response
         mock_client.models.generate_content.side_effect = [
-            mock_summary_res,
-            mock_skills_res,
-            mock_strengths_res,
-            mock_weaknesses_res,
-            mock_projects_res
+            mock_consolidated_res
         ]
         
         # Run analyzer with environment variable mocked

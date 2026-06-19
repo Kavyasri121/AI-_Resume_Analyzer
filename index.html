@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -199,6 +199,14 @@
                 <line x1="15" y1="9" x2="9" y2="15"/>
               </svg>
               ATS Analysis
+            </button>
+            <button type="button" class="tab-btn" data-tab="interview-questions">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Interview Questions
             </button>
           </div>
 
@@ -447,6 +455,126 @@
 
           </div><!-- /#ats-analysis-tab-content -->
 
+          <!-- Tab Content: Interview Questions -->
+          <div id="interview-questions-tab-content" class="tab-content-panel hidden">
+            
+            <!-- Empty state message if ATS Analysis not run yet -->
+            <div class="profile-block" id="interview-empty-state" style="margin-bottom: 2rem;">
+              <div style="text-align: center; padding: 2.5rem 1.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-light); margin-bottom: 1rem;">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <h3 style="font-family: var(--font-header); font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);">No Interview Questions Generated Yet</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 420px; margin: 0 auto 1.5rem; line-height: 1.5;">
+                  Interview preparation is personalized based on your target role and ATS analysis. Please head to the <strong>ATS Analysis</strong> tab, configure your target details, and run the analysis.
+                </p>
+                <button type="button" class="btn btn-primary" onclick="document.querySelector('[data-tab=ats-analysis]').click()">Go to ATS Analysis</button>
+              </div>
+            </div>
+
+            <!-- Interview Dashboard Content (Hidden by default) -->
+            <div class="interview-dashboard-content hidden" id="interview-dashboard-wrapper" style="display: flex; flex-direction: column; gap: 2rem;">
+              
+              <!-- Readiness Score and Summary Grid -->
+              <div class="results-grid" style="display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 2rem;">
+                
+                <!-- Readiness Score Card -->
+                <div class="profile-block" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1.25rem;">
+                  <span class="badge" style="font-size: 0.7rem; font-weight: 700; background-color: var(--primary-light); color: var(--primary);">Interview Readiness</span>
+                  
+                  <div class="circular-score-wrapper" style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
+                     <svg class="score-circle-svg" viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                       <circle class="score-circle-bg" cx="50" cy="50" r="42" stroke="var(--border-color)" stroke-width="7" fill="transparent"></circle>
+                       <circle class="score-circle-bar" id="interview-circle-bar" cx="50" cy="50" r="42" stroke="var(--primary)" stroke-width="7" fill="transparent" stroke-linecap="round" stroke-dasharray="263.89" stroke-dashoffset="263.89" style="transition: stroke-dashoffset 1s ease-in-out;"></circle>
+                     </svg>
+                     <div class="score-text-container" style="position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-header);">
+                       <span class="score-val" id="interview-score-text" style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1;">0</span>
+                       <span class="score-total" style="font-size: 0.75rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; margin-top: 0.1rem;">Ready / 100</span>
+                     </div>
+                  </div>
+
+                  <div>
+                    <h3 class="status-title" id="interview-status-title" style="font-family: var(--font-header); font-weight: 800; font-size: 1.25rem; color: var(--text-main); margin-bottom: 0.25rem;">Checking...</h3>
+                    <p class="status-description" id="interview-status-desc" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; padding: 0 0.5rem;"></p>
+                  </div>
+                </div>
+
+                <!-- Weak Areas & Preparation Roadmap -->
+                <div class="profile-block" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                  <div class="section-heading" style="margin-bottom: 0.25rem; padding-bottom: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                    <span>Preparation Gaps & Roadmap</span>
+                  </div>
+                  
+                  <div>
+                    <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--danger-text); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Identified Gaps</h5>
+                    <div class="keywords-chips-group" id="interview-weak-areas" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                      <!-- Chips generated via JS -->
+                    </div>
+                  </div>
+
+                  <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.25rem;">
+                    <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Study Roadmap</h5>
+                    <div id="interview-roadmap-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                      <!-- Roadmap items generated via JS -->
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Interactive Questions Explorer -->
+              <div class="profile-block" style="margin-bottom: 2rem;">
+                <div class="section-heading" style="margin-bottom: 1.25rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span>Personalized Interview Questions Explorer</span>
+                </div>
+
+                <!-- Search and Filter Controls -->
+                <div class="interview-filters-row" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                  <div style="flex-grow: 1; min-width: 240px; position: relative;">
+                    <input type="text" id="interview-search-input" placeholder="Search questions, technologies, or keywords..." style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-main); background-color: var(--bg-main);">
+                  </div>
+                  <div style="min-width: 180px;">
+                    <select id="interview-category-filter" style="width: 100%; padding: 0.72rem; border-radius: 8px; border: 1px solid var(--border-color); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-main); background-color: var(--white); cursor: pointer;">
+                      <option value="all">All Rounds</option>
+                      <option value="Introduction">Introduction</option>
+                      <option value="Resume Discussion">Resume Discussion</option>
+                      <option value="Project Deep Dive">Project Deep Dive</option>
+                      <option value="Technical Questions">Technical Questions</option>
+                      <option value="HR Questions">HR Questions</option>
+                      <option value="Role-Based">Role-Based</option>
+                      <option value="Behavioural Round">Behavioural Round</option>
+                    </select>
+                  </div>
+                  <div style="min-width: 150px;">
+                    <select id="interview-difficulty-filter" style="width: 100%; padding: 0.72rem; border-radius: 8px; border: 1px solid var(--border-color); font-family: var(--font-body); font-size: 0.9rem; color: var(--text-main); background-color: var(--white); cursor: pointer;">
+                      <option value="all">All Difficulties</option>
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Questions List Container -->
+                <div id="interview-questions-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                  <!-- Question items dynamically loaded here -->
+                </div>
+              </div>
+
+            </div>
+
+          </div><!-- /#ats-analysis-tab-content -->
+
           <!-- Tab Content: Resume Analysis -->
           <div id="resume-analysis-tab-content" class="tab-content-panel active">
 
@@ -596,6 +724,6 @@
     </footer>
   </div>
 
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>

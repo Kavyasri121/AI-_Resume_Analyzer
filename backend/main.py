@@ -218,6 +218,8 @@ async def ats_analyze(payload: ATSAnalysisRequest):
 
     try:
         from ats_analyzer import ATSAnalyzer
+        from interview_generator import InterviewGenerator
+        
         analyzer = ATSAnalyzer()
         report = analyzer.analyze(
             resume_data=resume_data,
@@ -225,9 +227,21 @@ async def ats_analyze(payload: ATSAnalysisRequest):
             experience_level=payload.experience_level,
             job_description=payload.job_description
         )
+        
+        # Generate personalized interview prep
+        generator = InterviewGenerator()
+        interview_prep = generator.generate(
+            resume_data=resume_data,
+            ats_report=report,
+            target_role=payload.target_role,
+            experience_level=payload.experience_level,
+            job_description=payload.job_description
+        )
+        
         return {
             "success": True,
-            "report": report
+            "report": report,
+            "interview_prep": interview_prep
         }
     except ValueError as ve:
         raise HTTPException(

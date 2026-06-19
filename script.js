@@ -56,8 +56,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabButtons = document.querySelectorAll('.dashboard-tabs .tab-btn');
   const tabPanels = {
     'resume-analysis': document.getElementById('resume-analysis-tab-content'),
-    'ats-analysis': document.getElementById('ats-analysis-tab-content')
+    'ats-analysis': document.getElementById('ats-analysis-tab-content'),
+    'interview-questions': document.getElementById('interview-questions-tab-content')
   };
+
+  // --- Interview Preparation Selectors ---
+  const interviewEmptyState = document.getElementById('interview-empty-state');
+  const interviewDashboardWrapper = document.getElementById('interview-dashboard-wrapper');
+  const interviewCircleBar = document.getElementById('interview-circle-bar');
+  const interviewScoreText = document.getElementById('interview-score-text');
+  const interviewStatusTitle = document.getElementById('interview-status-title');
+  const interviewStatusDesc = document.getElementById('interview-status-desc');
+  const interviewWeakAreas = document.getElementById('interview-weak-areas');
+  const interviewRoadmapContainer = document.getElementById('interview-roadmap-container');
+  const interviewSearchInput = document.getElementById('interview-search-input');
+  const interviewCategoryFilter = document.getElementById('interview-category-filter');
+  const interviewDifficultyFilter = document.getElementById('interview-difficulty-filter');
+  const interviewQuestionsList = document.getElementById('interview-questions-list');
+  
+  let interviewQuestionsData = []; // Store active questions for filtering
 
   // --- State Variables ---
   let currentFile = null;
@@ -239,6 +256,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render ATS Report
       renderAtsReport(data.report);
+
+      // Render Interview preparation dashboard if available
+      if (data.interview_prep) {
+        renderInterviewPrep(data.interview_prep);
+      }
       
       // Scroll to results
       setTimeout(() => {
@@ -254,6 +276,17 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(error.message || 'Error executing ATS analysis.');
     });
   });
+
+  // Set up filters & search inputs for Interview Prep
+  if (interviewSearchInput) {
+    interviewSearchInput.addEventListener('input', renderInterviewQuestions);
+  }
+  if (interviewCategoryFilter) {
+    interviewCategoryFilter.addEventListener('change', renderInterviewQuestions);
+  }
+  if (interviewDifficultyFilter) {
+    interviewDifficultyFilter.addEventListener('change', renderInterviewQuestions);
+  }
 
   // Tab switching handler
   function switchTab(tabId) {
@@ -795,6 +828,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset tabs active state
     switchTab('resume-analysis');
 
+    // Reset Interview Prep states
+    interviewQuestionsData = [];
+    if (interviewSearchInput) interviewSearchInput.value = '';
+    if (interviewCategoryFilter) interviewCategoryFilter.value = 'all';
+    if (interviewDifficultyFilter) interviewDifficultyFilter.value = 'all';
+    if (interviewQuestionsList) interviewQuestionsList.innerHTML = '';
+    if (interviewDashboardWrapper) interviewDashboardWrapper.classList.add('hidden');
+    if (interviewEmptyState) interviewEmptyState.classList.remove('hidden');
+
     clearInterval(uploadTimer);
     isUploading = false;
     currentFile = null;
@@ -1222,5 +1264,168 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     }
+  }
+
+  function renderInterviewPrep(prep) {
+    if (!prep) return;
+
+    // 1. Show dashboard, hide empty state
+    if (interviewEmptyState) interviewEmptyState.classList.add('hidden');
+    if (interviewDashboardWrapper) interviewDashboardWrapper.classList.remove('hidden');
+
+    // 2. Render Score and radial circle progress
+    const score = prep.interview_readiness_score || 0;
+    if (interviewScoreText) {
+      interviewScoreText.textContent = score;
+    }
+    if (interviewCircleBar) {
+      const offset = 263.89 * (1 - score / 100);
+      interviewCircleBar.style.strokeDashoffset = offset;
+    }
+
+    // 3. Render Status Title and explanation
+    if (interviewStatusTitle) {
+      if (score >= 85) {
+        interviewStatusTitle.textContent = "Interview Ready";
+      } else if (score >= 70) {
+        interviewStatusTitle.textContent = "Good Progress";
+      } else {
+        interviewStatusTitle.textContent = "Needs Preparation";
+      }
+    }
+    if (interviewStatusDesc) {
+      interviewStatusDesc.textContent = prep.readiness_explanation || "";
+    }
+
+    // 4. Render Weak Areas
+    if (interviewWeakAreas) {
+      interviewWeakAreas.innerHTML = '';
+      const gaps = prep.weak_areas || [];
+      if (gaps.length === 0) {
+        interviewWeakAreas.innerHTML = '<span style="font-size:0.85rem; color:var(--success); font-weight:600;">No preparation gaps identified!</span>';
+      } else {
+        interviewWeakAreas.innerHTML = gaps.map(gap => `
+          <span class="keyword-chip missing">${gap}</span>
+        `).join('');
+      }
+    }
+
+    // 5. Render Study Roadmap
+    if (interviewRoadmapContainer) {
+      interviewRoadmapContainer.innerHTML = '';
+      const roadmap = prep.roadmap || {};
+      
+      let index = 1;
+      for (const [priority, steps] of Object.entries(roadmap)) {
+        if (steps && steps.length > 0) {
+          const priorityClass = priority.toLowerCase().replace(' ', '');
+          const section = document.createElement('div');
+          section.innerHTML = `
+            <div class="priority-header ${priorityClass}">${priority}</div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+              ${steps.map(step => `
+                <div class="roadmap-step-card">
+                  <div class="roadmap-step-bullet">${index++}</div>
+                  <div class="roadmap-step-text">${step}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+          interviewRoadmapContainer.appendChild(section);
+        }
+      }
+    }
+
+    // 6. Store questions and trigger render
+    interviewQuestionsData = prep.questions || [];
+    renderInterviewQuestions();
+  }
+
+  function renderInterviewQuestions() {
+    if (!interviewQuestionsList) return;
+    interviewQuestionsList.innerHTML = '';
+
+    const searchText = interviewSearchInput ? interviewSearchInput.value.toLowerCase().trim() : '';
+    const selectedCat = interviewCategoryFilter ? interviewCategoryFilter.value : 'all';
+    const selectedDiff = interviewDifficultyFilter ? interviewDifficultyFilter.value : 'all';
+
+    // Filter array
+    const filtered = interviewQuestionsData.filter(q => {
+      // Filter Category
+      if (selectedCat !== 'all' && q.category !== selectedCat) {
+        return false;
+      }
+      // Filter Difficulty
+      if (selectedDiff !== 'all' && q.difficulty !== selectedDiff) {
+        return false;
+      }
+      // Search text match
+      if (searchText) {
+        const questionText = (q.question || '').toLowerCase();
+        const evalText = (q.what_interviewer_is_evaluating || '').toLowerCase();
+        const topicsText = (q.expected_topics || []).join(' ').toLowerCase();
+        if (!questionText.includes(searchText) && !evalText.includes(searchText) && !topicsText.includes(searchText)) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      interviewQuestionsList.innerHTML = `
+        <div style="text-align: center; padding: 2.5rem; color: var(--text-light); font-style: italic; border: 1px dashed var(--border-color); border-radius: 12px;">
+          No questions found matching current search or filters.
+        </div>
+      `;
+      return;
+    }
+
+    filtered.forEach((q, index) => {
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      
+      const diffClass = q.difficulty.toLowerCase();
+      const expectedTopicsHtml = (q.expected_topics || []).map(topic => `
+        <span class="project-tech-tag" style="background-color: var(--primary-light); color: var(--primary); border: none; margin: 0.15rem 0;">${topic}</span>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="question-card-header">
+          <h4 class="question-card-title">${q.question}</h4>
+          <div class="question-card-meta">
+            <span class="category-badge">${q.category}</span>
+            <span class="diff-badge ${diffClass}">${q.difficulty}</span>
+          </div>
+        </div>
+        
+        <div class="question-card-body">
+          <div class="guide-item">
+            <div class="guide-item-title">Why the interviewer asks this</div>
+            <div class="guide-item-content">${q.why_interviewer_asks_this}</div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-title">What they are evaluating</div>
+            <div class="guide-item-content">${q.what_interviewer_is_evaluating}</div>
+          </div>
+          <div class="guide-item">
+            <div class="guide-item-title">Expected topics & keywords to mention</div>
+            <div class="project-tech-tags" style="margin-top: 0.25rem;">
+              ${expectedTopicsHtml || '<span style="color:var(--text-light); font-style:italic; font-size:0.8rem;">General conceptual review</span>'}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Expandable toggle listener
+      card.addEventListener('click', (e) => {
+        // Prevent click trigger if selecting text or clicking tags
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION' || window.getSelection().toString()) {
+          return;
+        }
+        card.classList.toggle('expanded');
+      });
+
+      interviewQuestionsList.appendChild(card);
+    });
   }
 });
